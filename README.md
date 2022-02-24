@@ -10,7 +10,7 @@ Vue.use(TextEllipsisIe);
  组件配置项
 #### text [String]
   需要展示的文字内容
-#### height [Number] 优先级更高
+#### height [Number] 优先级比maxline更高
   设置一个高度，在此高度内自动适配出最合适的高度
 #### heightType [remove / increase]
   只有在设置height以后才生效，若设置的高度处于n*lineHeight < height < (n+1)*lineHeight, 
