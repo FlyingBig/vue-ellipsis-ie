@@ -1,8 +1,13 @@
 {
   "name": "vue-text-ellipsis-ie",
-  "version": "1.0.4",
+  "version": "1.0.3",
   "description": "支持ie浏览器下的多行省略组件",
   "main": "dist/vue-text-ellipsis-ie.js",
+  "homepage": "https://github.com/FlyingBig/vue-text-ellipsis-ie",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FlyingBig/vue-text-ellipsis-ie"
+  },
   "scripts": {
     "dev": "npm run dev:umd",
     "dev:umd": "rollup -c -w rollup.config.js",
