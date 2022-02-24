@@ -27,4 +27,4 @@ Vue.use(TextEllipsisIe);
 #### tabs [Number]
   省略位置往前/后平移几个字体单位
 
-在线dome：
+在线dome：https://codesandbox.io/s/sweet-sutherland-nuqg43?file=/src/App.vue
