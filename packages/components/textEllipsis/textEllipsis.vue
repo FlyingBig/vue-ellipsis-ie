@@ -1,3 +1,10 @@
+<!--
+ * @Editor: chenqy
+ * @Description: 兼容IE浏览器的多行省略
+ * @Date: 2022-02-17 16:49:25
+ * @LastEditors: Chenqy
+ * @LastEditTime: 2022-02-28 17:17:03
+-->
 <template>
   <div class="dsf-muti-ellipsis" ref="container">
     <div class="dsf-muti-ellipsis-content">
@@ -12,7 +19,7 @@
 </template>
 <script>
 export default {
-  name: "TextEllipsis",
+  name: "DsfMutiEllipsis",
   props: {
     // 需要展示的内容
     text: {
@@ -58,6 +65,7 @@ export default {
       containerStyle: {
         width: 0,
       },
+      watchDisplay: "",
       textStyle: {
         height: 0,
         letterSpacing: 0,
@@ -66,6 +74,10 @@ export default {
     };
   },
   watch: {
+    text(value) {
+      console.log(value);
+      this.getStylesOfText();
+    },
     isComplate(value) {
       if (this.textFat.moreText) {
         if (value) {
@@ -102,36 +114,44 @@ export default {
     },
   },
   mounted() {
-    // 获取填装text容器总宽度
-    let span = this.$refs.text.cloneNode();
-    span.innerHTML = this.$props.text;
-    for (let k in this.$props.txtStyle) {
-      span.style[k] = this.$props.txtStyle[k];
-    }
-    span.style.opacity = 0;
-    this.$refs.container.appendChild(span);
-    // 展示字体样式
-    let textStyle = null;
-    if (window.getComputedStyle) {
-      textStyle = window.getComputedStyle(this.$refs.text);
-      this.textStyle = {
-        height: +textStyle.fontSize.replace(/px/, ""),
-        letterSpacing: +textStyle.letterSpacing.replace(/px/, "") || 0,
-        lineHeight: textStyle.lineHeight,
-      };
-    } else {
-      textStyle = this.$refs.text.currentStyle();
-    }
-    this.containerStyle.width = Math.max(
-      span.offsetWidth,
-      this.$refs.container.offsetWidth -
-        this.textStyle.height -
-        this.textStyle.letterSpacing
-    );
-    this.$refs.container.removeChild(span);
-    this.getChatsLength();
+    this.getStylesOfText();
   },
   methods: {
+    getStylesOfText() {
+      if (!this.$refs.container.offsetWidth) {
+        console.log();
+        this.watchDisplayNone();
+        return;
+      }
+      // 获取填装text容器总宽度
+      let span = this.$refs.text.cloneNode();
+      span.innerHTML = this.$props.text;
+      for (let k in this.$props.txtStyle) {
+        span.style[k] = this.$props.txtStyle[k];
+      }
+      span.style.opacity = 0;
+      this.$refs.container.appendChild(span);
+      // 展示字体样式
+      let textStyle = null;
+      if (window.getComputedStyle) {
+        textStyle = window.getComputedStyle(this.$refs.text);
+        this.textStyle = {
+          height: +textStyle.fontSize.replace(/px/, ""),
+          letterSpacing: +textStyle.letterSpacing.replace(/px/, "") || 0,
+          lineHeight: textStyle.lineHeight,
+        };
+      } else {
+        textStyle = this.$refs.text.currentStyle();
+      }
+      this.containerStyle.width = Math.max(
+        span.offsetWidth,
+        this.$refs.container.offsetWidth -
+          this.textStyle.height -
+          this.textStyle.letterSpacing
+      );
+      this.$refs.container.removeChild(span);
+      this.getChatsLength();
+    },
     getChatsLength() {
       let { more, text, tabs } = this.$props;
       // 规定区域内字符串个数
@@ -183,6 +203,37 @@ export default {
           moreText: this.text.substring(splitIndex),
         };
       }
+    },
+    watchDisplayNone() {
+      let parentDom = this.$refs.container.parentElement;
+      let watchedObject = null;
+      const _this = this;
+      while (parentDom) {
+        if (parentDom.style.display !== "none") {
+          parentDom = parentDom.parentElement;
+        } else {
+          watchedObject = parentDom.style;
+          break;
+        }
+      }
+      this.watchDisplay = watchedObject.display;
+      Object.defineProperty(watchedObject, "display", {
+        configurable: true,
+        set: function (value) {
+          _this.watchDisplay = value;
+          let style = this.cssText.replace(/display:.+/g, "");
+          if (value.trim() !== "") {
+            style += `display: ${value}`;
+          }
+          parentDom.setAttribute("style", style);
+          if (value !== "none" && !_this.textFat.viewText) {
+            _this.getStylesOfText();
+          }
+        },
+        get: function () {
+          return _this.watchDisplay;
+        },
+      });
     },
   },
 };
