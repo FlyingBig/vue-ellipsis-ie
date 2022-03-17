@@ -1,10 +1,3 @@
-<!--
- * @Editor: chenqy
- * @Description: 兼容IE浏览器的多行省略
- * @Date: 2022-02-17 16:49:25
- * @LastEditors: Chenqy
- * @LastEditTime: 2022-02-28 17:17:03
--->
 <template>
   <div class="dsf-muti-ellipsis" ref="container">
     <div class="dsf-muti-ellipsis-content">
@@ -62,6 +55,7 @@ export default {
         viewText: "", // 展示区域文字
         moreText: "", // 省略文字
       },
+
       containerStyle: {
         width: 0,
       },
@@ -71,11 +65,11 @@ export default {
         letterSpacing: 0,
         lineHeight: 0,
       },
+      prDisplayNode: null, // 最近的祖先元素被隐藏的节点
     };
   },
   watch: {
-    text(value) {
-      console.log(value);
+    text() {
       this.getStylesOfText();
     },
     isComplate(value) {
@@ -96,15 +90,10 @@ export default {
       if (height !== undefined) {
         let numberLineHeight =
           this.textStyle.lineHeight === "normal"
-            ? 1.2
-            : +this.textStyle.lineHeight;
-        maxWidth =
-          ~~(height / (this.textStyle.height * numberLineHeight)) *
-          this.containerStyle.width;
-        if (
-          heightType === "increase" &&
-          height % (this.textStyle.height * numberLineHeight)
-        ) {
+            ? 1.2 * this.txtStyle.height
+            : parseFloat(this.textStyle.lineHeight);
+        maxWidth = ~~(height / numberLineHeight) * this.containerStyle.width;
+        if (heightType === "increase" && height % numberLineHeight) {
           maxWidth += this.containerStyle.width;
         }
       } else {
@@ -118,39 +107,42 @@ export default {
   },
   methods: {
     getStylesOfText() {
-      if (!this.$refs.container.offsetWidth) {
-        console.log();
-        this.watchDisplayNone();
-        return;
-      }
-      // 获取填装text容器总宽度
-      let span = this.$refs.text.cloneNode();
-      span.innerHTML = this.$props.text;
-      for (let k in this.$props.txtStyle) {
-        span.style[k] = this.$props.txtStyle[k];
-      }
-      span.style.opacity = 0;
-      this.$refs.container.appendChild(span);
-      // 展示字体样式
-      let textStyle = null;
-      if (window.getComputedStyle) {
-        textStyle = window.getComputedStyle(this.$refs.text);
-        this.textStyle = {
-          height: +textStyle.fontSize.replace(/px/, ""),
-          letterSpacing: +textStyle.letterSpacing.replace(/px/, "") || 0,
-          lineHeight: textStyle.lineHeight,
-        };
-      } else {
-        textStyle = this.$refs.text.currentStyle();
-      }
-      this.containerStyle.width = Math.max(
-        span.offsetWidth,
-        this.$refs.container.offsetWidth -
-          this.textStyle.height -
-          this.textStyle.letterSpacing
-      );
-      this.$refs.container.removeChild(span);
-      this.getChatsLength();
+      this.$nextTick(() => {
+        setTimeout(() => {
+          if (!this.$refs.container.offsetWidth) {
+            this.watchDisplayNone();
+            return;
+          }
+          // 获取填装text容器总宽度
+          let span = this.$refs.text.cloneNode();
+          span.innerHTML = this.$props.text;
+          for (let k in this.$props.txtStyle) {
+            span.style[k] = this.$props.txtStyle[k];
+          }
+          span.style.opacity = 0;
+          this.$refs.container.appendChild(span);
+          // 展示字体样式
+          let textStyle = null;
+          if (window.getComputedStyle) {
+            textStyle = window.getComputedStyle(this.$refs.text);
+            this.textStyle = {
+              height: +textStyle.fontSize.replace(/px/, ""),
+              letterSpacing: +textStyle.letterSpacing.replace(/px/, "") || 0,
+              lineHeight: textStyle.lineHeight,
+            };
+          } else {
+            textStyle = this.$refs.text.currentStyle();
+          }
+          this.containerStyle.width = Math.max(
+            span.offsetWidth,
+            this.$refs.container.offsetWidth -
+              this.textStyle.height -
+              this.textStyle.letterSpacing
+          );
+          this.$refs.container.removeChild(span);
+          this.getChatsLength();
+        }, 50);
+      });
     },
     getChatsLength() {
       let { more, text, tabs } = this.$props;
@@ -205,36 +197,72 @@ export default {
       }
     },
     watchDisplayNone() {
-      let parentDom = this.$refs.container.parentElement;
-      let watchedObject = null;
-      const _this = this;
-      while (parentDom) {
-        if (parentDom.style.display !== "none") {
-          parentDom = parentDom.parentElement;
-        } else {
-          watchedObject = parentDom.style;
-          break;
+      try {
+        let parentDom = this.$refs.container.parentElement;
+        let watchedObject = null;
+        const _this = this;
+        // 寻找最近的display为none的祖先元素
+        while (parentDom) {
+          if (parentDom.style.display !== "none") {
+            parentDom = parentDom.parentElement;
+          } else {
+            watchedObject = parentDom.style;
+            break;
+          }
         }
+        this.watchDisplay = watchedObject.display;
+        const isWatched = Object.getOwnPropertyDescriptor(
+          watchedObject,
+          "display"
+        );
+        this.prDisplayNode = parentDom;
+        let watchers = parentDom.EllipsisWatchers || {};
+        if (!watchers[this._uid]) {
+          // 注册订阅者
+          const fn = function (value) {
+            if (value !== "none" && !this.textFat.viewText) {
+              this.getStylesOfText();
+            }
+          };
+          watchers[this._uid] = fn.bind(this);
+          parentDom.EllipsisWatchers = watchers;
+        }
+        // 若该元素之前就被代理过，则忽略
+        if (!isWatched || !typeof(isWatched.isWatched) === "function") {
+          Object.defineProperty(watchedObject, "display", {
+            configurable: true,
+            set: function (value) {
+              let watchers = parentDom.EllipsisWatchers;
+              // 更改Dom样式
+              let style = this.cssText.replace(/display:.+/g, "");
+              if (value.trim() !== "") {
+                style += `display: ${value}`;
+              }
+              parentDom.setAttribute("style", style);
+              _this.watchDisplay = value;
+
+              // 分发当前节点下的所有组件
+              for (let uid in watchers) {
+                watchers[uid](value);
+              }
+            },
+            get: function () {
+              return _this.watchDisplay;
+            },
+          });
+        }
+      } catch (e) {
+        console.log(e);
       }
-      this.watchDisplay = watchedObject.display;
-      Object.defineProperty(watchedObject, "display", {
-        configurable: true,
-        set: function (value) {
-          _this.watchDisplay = value;
-          let style = this.cssText.replace(/display:.+/g, "");
-          if (value.trim() !== "") {
-            style += `display: ${value}`;
-          }
-          parentDom.setAttribute("style", style);
-          if (value !== "none" && !_this.textFat.viewText) {
-            _this.getStylesOfText();
-          }
-        },
-        get: function () {
-          return _this.watchDisplay;
-        },
-      });
     },
+  },
+  beforeDestroy() {
+    if (displayNode) {
+      let watchers = this.displayNode?.EllipsisWatchers;
+      if (watchers) {
+        delete watchers[this._uid];
+      }
+    }
   },
 };
 </script>
