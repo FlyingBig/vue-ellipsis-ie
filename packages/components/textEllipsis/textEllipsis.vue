@@ -196,7 +196,16 @@ export default {
         };
       }
     },
+    // 这是我分支代码 但是不想提交
     watchDisplayNone() {
+      console.log(1111111111111)
+      console.log(1111111111111)
+      console.log(1111111111111)
+      console.log(1111111111111)
+      console.log(1111111111111)
+      console.log(1111111111111)
+      console.log(1111111111111)
+      console.log(1111111111111)
       try {
         let parentDom = this.$refs.container.parentElement;
         let watchedObject = null;
