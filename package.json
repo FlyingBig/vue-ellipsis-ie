@@ -1,6 +1,6 @@
 {
   "name": "vue-text-ellipsis-ie",
-  "version": "1.0.7",
+  "version": "1.0.7alpha-1",
   "description": "支持ie浏览器下的多行省略组件",
   "main": "dist/vue-text-ellipsis-ie.js",
   "homepage": "https://github.com/FlyingBig/vue-text-ellipsis-ie",
