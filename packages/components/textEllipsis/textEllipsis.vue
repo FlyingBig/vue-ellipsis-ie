@@ -1,16 +1,27 @@
 <template>
   <div class="dsf-muti-ellipsis" ref="container">
-    <div class="dsf-muti-ellipsis-content">
-      <span ref="text" :style="txtStyle">{{ textFat.viewText }}</span>
-      <transition name="ellipsis-slide">
-        <span class="more" :style="txtStyle" v-if="isComplate">{{
-          textFat.moreText
-        }}</span>
-      </transition>
+    <div
+      class="ellipsis-webkit-type"
+      :style="!isComplate && webkitStyle"
+      v-if="!clientIsIe"
+    >
+      <div :style="txtStylePlus">{{ text }}</div>
+      <div>{{ $txtStyle }}</div>
+    </div>
+    <div class="ellipsis-ie-type" v-else>
+      <div class="dsf-muti-ellipsis-content">
+        <span ref="text" :style="txtStylePlus">{{ textFat.viewText }}</span>
+        <transition name="ellipsis-slide">
+          <span class="more" :style="txtStylePlus" v-if="isComplate">{{
+            textFat.moreText
+          }}</span>
+        </transition>
+      </div>
     </div>
   </div>
 </template>
 <script>
+let clientIsIe = "";
 export default {
   name: "DsfMutiEllipsis",
   props: {
@@ -19,13 +30,13 @@ export default {
       type: String,
       default: "",
     },
-    // 展示区域最大高度（优先级更高，自动匹配最合适的行数）
-    height: Number,
-    // 只有设置高度属性时才生效。
-    heightType: {
-      type: String,
-      default: "remove", // 当设置高度不等于行高的倍数时，remove -> 采用此高度下最大的整数行数  / increase -> 采用此高度下最大的整数行数 + 1
-    },
+    // // 展示区域最大高度（优先级更高，自动匹配最合适的行数） ====== 抛弃--保持跟webkit多行省略一致
+    // height: Number,
+    // // 只有设置高度属性时才生效。 ====== 抛弃--保持跟webkit多行省略一致
+    // heightType: {
+    //   type: String,
+    //   default: "remove", // 当设置高度不等于行高的倍数时，remove -> 采用此高度下最大的整数行数  / increase -> 采用此高度下最大的整数行数 + 1
+    // },
     // 展示区域做大行数
     maxLine: {
       type: Number,
@@ -66,6 +77,10 @@ export default {
         lineHeight: 0,
       },
       prDisplayNode: null, // 最近的祖先元素被隐藏的节点
+      clientIsIe: "",
+      webkitStyle: {},
+      // 消除tab标签之间幽灵元素
+      txtStylePlus: Object.assign({}, { "font-size": "16px" }, this.txtStyle),
     };
   },
   watch: {
@@ -85,25 +100,49 @@ export default {
   },
   computed: {
     limitWidth() {
-      let maxWidth = 0;
-      let { heightType, height, maxLine } = this.$props;
-      if (height !== undefined) {
-        let numberLineHeight =
-          this.textStyle.lineHeight === "normal"
-            ? 1.2 * this.txtStyle.height
-            : parseFloat(this.textStyle.lineHeight);
-        maxWidth = ~~(height / numberLineHeight) * this.containerStyle.width;
-        if (heightType === "increase" && height % numberLineHeight) {
-          maxWidth += this.containerStyle.width;
-        }
-      } else {
-        maxWidth = maxLine * this.containerStyle.width;
-      }
-      return maxWidth;
+      // let { heightType, height, maxLine } = this.$props;
+      // if (height !== undefined) {
+      //   let numberLineHeight =
+      //     this.textStyle.lineHeight === "normal"
+      //       ? 1.2 * this.txtStyle.height
+      //       : parseFloat(this.textStyle.lineHeight);
+      //   maxWidth = ~~(height / numberLineHeight) * this.containerStyle.width;
+      //   if (heightType === "increase" && height % numberLineHeight) {
+      //     maxWidth += this.containerStyle.width;
+      //   }
+      // } else {
+      //   maxWidth = maxLine * this.containerStyle.width;
+      // }
+      return this.maxLine * this.containerStyle.width;
     },
   },
   mounted() {
-    this.getStylesOfText();
+    let userAgent = navigator.userAgent;
+    if (clientIsIe !== "") {
+      this.clientIsIe = clientIsIe;
+      if (clientIsIe) {
+        this.getStylesOfText();
+      }
+      return;
+    }
+    if (
+      (userAgent.indexOf("compatible") > -1 &&
+        userAgent.indexOf("MSIE") > -1) ||
+      userAgent.indexOf("Trident") > -1
+    ) {
+      clientIsIe = true;
+      this.getStylesOfText();
+    } else {
+      clientIsIe = false;
+      this.webkitStyle = {
+        display: "-webkit-box",
+        "-webkit-box-orient": "vertical",
+        overflow: "hidden",
+        "-webkit-line-clamp": this.maxLine,
+        "text-overflow": "ellipsis",
+      };
+    }
+    this.clientIsIe = clientIsIe;
   },
   methods: {
     getStylesOfText() {
@@ -116,8 +155,8 @@ export default {
           // 获取填装text容器总宽度
           let span = this.$refs.text.cloneNode();
           span.innerHTML = this.$props.text;
-          for (let k in this.$props.txtStyle) {
-            span.style[k] = this.$props.txtStyle[k];
+          for (let k in this.txtStylePlus) {
+            span.style[k] = this.txtStylePlus[k];
           }
           span.style.opacity = 0;
           this.$refs.container.appendChild(span);
@@ -228,7 +267,7 @@ export default {
           parentDom.EllipsisWatchers = watchers;
         }
         // 若该元素之前就被代理过，则忽略
-        if (!isWatched || !typeof(isWatched.isWatched) === "function") {
+        if (!isWatched || !typeof isWatched.isWatched === "function") {
           Object.defineProperty(watchedObject, "display", {
             configurable: true,
             set: function (value) {
@@ -257,8 +296,8 @@ export default {
     },
   },
   beforeDestroy() {
-    if (displayNode) {
-      let watchers = this.displayNode?.EllipsisWatchers;
+    if (this.prDisplayNode) {
+      let watchers = this.prDisplayNode?.EllipsisWatchers;
       if (watchers) {
         delete watchers[this._uid];
       }
@@ -267,6 +306,9 @@ export default {
 };
 </script>
 <style lang="css" scoped>
+.dsf-muti-ellipsis-content {
+  font-size: 0;
+}
 .ellipsis-slide-enter-active {
   transition: opacity 0.3s;
 }
