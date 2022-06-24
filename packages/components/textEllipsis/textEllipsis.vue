@@ -6,7 +6,6 @@
       v-if="!clientIsIe"
     >
       <div :style="txtStylePlus">{{ text }}</div>
-      <div>{{ $txtStyle }}</div>
     </div>
     <div class="ellipsis-ie-type" v-else>
       <div class="dsf-muti-ellipsis-content">
