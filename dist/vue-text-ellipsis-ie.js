@@ -16,7 +16,30 @@
   //
   //
   //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
 
+  let clientIsIe = "";
   var script = {
     name: "DsfMutiEllipsis",
     props: {
@@ -25,13 +48,13 @@
         type: String,
         default: "",
       },
-      // 展示区域最大高度（优先级更高，自动匹配最合适的行数）
-      height: Number,
-      // 只有设置高度属性时才生效。
-      heightType: {
-        type: String,
-        default: "remove", // 当设置高度不等于行高的倍数时，remove -> 采用此高度下最大的整数行数  / increase -> 采用此高度下最大的整数行数 + 1
-      },
+      // // 展示区域最大高度（优先级更高，自动匹配最合适的行数） ====== 抛弃--保持跟webkit多行省略一致
+      // height: Number,
+      // // 只有设置高度属性时才生效。 ====== 抛弃--保持跟webkit多行省略一致
+      // heightType: {
+      //   type: String,
+      //   default: "remove", // 当设置高度不等于行高的倍数时，remove -> 采用此高度下最大的整数行数  / increase -> 采用此高度下最大的整数行数 + 1
+      // },
       // 展示区域做大行数
       maxLine: {
         type: Number,
@@ -72,6 +95,10 @@
           lineHeight: 0,
         },
         prDisplayNode: null, // 最近的祖先元素被隐藏的节点
+        clientIsIe: "",
+        webkitStyle: {},
+        // 消除tab标签之间幽灵元素
+        txtStylePlus: Object.assign({}, { "font-size": "16px" }, this.txtStyle),
       };
     },
     watch: {
@@ -91,25 +118,50 @@
     },
     computed: {
       limitWidth() {
-        let maxWidth = 0;
-        let { heightType, height, maxLine } = this.$props;
-        if (height !== undefined) {
-          let numberLineHeight =
-            this.textStyle.lineHeight === "normal"
-              ? 1.2 * this.txtStyle.height
-              : parseFloat(this.textStyle.lineHeight);
-          maxWidth = ~~(height / numberLineHeight) * this.containerStyle.width;
-          if (heightType === "increase" && height % numberLineHeight) {
-            maxWidth += this.containerStyle.width;
-          }
-        } else {
-          maxWidth = maxLine * this.containerStyle.width;
-        }
-        return maxWidth;
+        // let { heightType, height, maxLine } = this.$props;
+        // if (height !== undefined) {
+        //   let numberLineHeight =
+        //     this.textStyle.lineHeight === "normal"
+        //       ? 1.2 * this.txtStyle.height
+        //       : parseFloat(this.textStyle.lineHeight);
+        //   maxWidth = ~~(height / numberLineHeight) * this.containerStyle.width;
+        //   if (heightType === "increase" && height % numberLineHeight) {
+        //     maxWidth += this.containerStyle.width;
+        //   }
+        // } else {
+        //   maxWidth = maxLine * this.containerStyle.width;
+        // }
+        return this.maxLine * this.containerStyle.width;
       },
     },
     mounted() {
-      this.getStylesOfText();
+      let userAgent = navigator.userAgent;
+      if (clientIsIe !== "") {
+        this.clientIsIe = clientIsIe;
+        if (clientIsIe) {
+          this.getStylesOfText();
+        }
+        return;
+      }
+      if (
+        this.more !== "..." ||
+        (userAgent.indexOf("compatible") > -1 &&
+          userAgent.indexOf("MSIE") > -1) ||
+        userAgent.indexOf("Trident") > -1
+      ) {
+        clientIsIe = true;
+        this.getStylesOfText();
+      } else {
+        clientIsIe = false;
+        this.webkitStyle = {
+          display: "-webkit-box",
+          "-webkit-box-orient": "vertical",
+          overflow: "hidden",
+          "-webkit-line-clamp": this.maxLine,
+          "text-overflow": "ellipsis",
+        };
+      }
+      this.clientIsIe = clientIsIe;
     },
     methods: {
       getStylesOfText() {
@@ -122,8 +174,8 @@
             // 获取填装text容器总宽度
             let span = this.$refs.text.cloneNode();
             span.innerHTML = this.$props.text;
-            for (let k in this.$props.txtStyle) {
-              span.style[k] = this.$props.txtStyle[k];
+            for (let k in this.txtStylePlus) {
+              span.style[k] = this.txtStylePlus[k];
             }
             span.style.opacity = 0;
             this.$refs.container.appendChild(span);
@@ -234,7 +286,7 @@
             parentDom.EllipsisWatchers = watchers;
           }
           // 若该元素之前就被代理过，则忽略
-          if (!isWatched || !typeof(isWatched.isWatched) === "function") {
+          if (!isWatched || !typeof isWatched.isWatched === "function") {
             Object.defineProperty(watchedObject, "display", {
               configurable: true,
               set: function (value) {
@@ -263,8 +315,8 @@
       },
     },
     beforeDestroy() {
-      if (displayNode) {
-        let watchers = this.displayNode?.EllipsisWatchers;
+      if (this.prDisplayNode) {
+        let watchers = this.prDisplayNode?.EllipsisWatchers;
         if (watchers) {
           delete watchers[this._uid];
         }
@@ -409,24 +461,37 @@
     var _h = _vm.$createElement;
     var _c = _vm._self._c || _h;
     return _c("div", { ref: "container", staticClass: "dsf-muti-ellipsis" }, [
-      _c(
-        "div",
-        { staticClass: "dsf-muti-ellipsis-content" },
-        [
-          _c("span", { ref: "text", style: _vm.txtStyle }, [
-            _vm._v(_vm._s(_vm.textFat.viewText)),
+      !_vm.clientIsIe
+        ? _c(
+            "div",
+            {
+              staticClass: "ellipsis-webkit-type",
+              style: !_vm.isComplate && _vm.webkitStyle,
+            },
+            [_c("div", { style: _vm.txtStylePlus }, [_vm._v(_vm._s(_vm.text))])]
+          )
+        : _c("div", { staticClass: "ellipsis-ie-type" }, [
+            _c(
+              "div",
+              { staticClass: "dsf-muti-ellipsis-content" },
+              [
+                _c("span", { ref: "text", style: _vm.txtStylePlus }, [
+                  _vm._v(_vm._s(_vm.textFat.viewText)),
+                ]),
+                _vm._v(" "),
+                _c("transition", { attrs: { name: "ellipsis-slide" } }, [
+                  _vm.isComplate
+                    ? _c(
+                        "span",
+                        { staticClass: "more", style: _vm.txtStylePlus },
+                        [_vm._v(_vm._s(_vm.textFat.moreText))]
+                      )
+                    : _vm._e(),
+                ]),
+              ],
+              1
+            ),
           ]),
-          _vm._v(" "),
-          _c("transition", { attrs: { name: "ellipsis-slide" } }, [
-            _vm.isComplate
-              ? _c("span", { staticClass: "more", style: _vm.txtStyle }, [
-                  _vm._v(_vm._s(_vm.textFat.moreText)),
-                ])
-              : _vm._e(),
-          ]),
-        ],
-        1
-      ),
     ])
   };
   var __vue_staticRenderFns__ = [];
@@ -435,11 +500,11 @@
     /* style */
     const __vue_inject_styles__ = function (inject) {
       if (!inject) return
-      inject("data-v-c62caa18_0", { source: "\n.ellipsis-slide-enter-active[data-v-c62caa18] {\r\n  transition: opacity 0.3s;\n}\n.ellipsis-slide-leave-active[data-v-c62caa18] {\r\n  transition: opacity 0.3s;\n}\n.ellipsis-slide-enter[data-v-c62caa18],\r\n.ellipsis-slide-leave-to[data-v-c62caa18] {\r\n  opacity: 0;\n}\n.dsf-muti-ellipsis span[data-v-c62caa18] {\r\n  word-break: break-all;\n}\r\n", map: {"version":3,"sources":["E:\\projects\\work-self\\gitProjects\\vue-text-ellipsis-ie\\packages\\components\\textEllipsis\\textEllipsis.vue"],"names":[],"mappings":";AA6QA;EACA,wBAAA;AACA;AACA;EACA,wBAAA;AACA;AACA;;EAEA,UAAA;AACA;AACA;EACA,qBAAA;AACA","file":"textEllipsis.vue","sourcesContent":["<template>\r\n  <div class=\"dsf-muti-ellipsis\" ref=\"container\">\r\n    <div class=\"dsf-muti-ellipsis-content\">\r\n      <span ref=\"text\" :style=\"txtStyle\">{{ textFat.viewText }}</span>\r\n      <transition name=\"ellipsis-slide\">\r\n        <span class=\"more\" :style=\"txtStyle\" v-if=\"isComplate\">{{\r\n          textFat.moreText\r\n        }}</span>\r\n      </transition>\r\n    </div>\r\n  </div>\r\n</template>\r\n<script>\r\nexport default {\r\n  name: \"DsfMutiEllipsis\",\r\n  props: {\r\n    // 需要展示的内容\r\n    text: {\r\n      type: String,\r\n      default: \"\",\r\n    },\r\n    // 展示区域最大高度（优先级更高，自动匹配最合适的行数）\r\n    height: Number,\r\n    // 只有设置高度属性时才生效。\r\n    heightType: {\r\n      type: String,\r\n      default: \"remove\", // 当设置高度不等于行高的倍数时，remove -> 采用此高度下最大的整数行数  / increase -> 采用此高度下最大的整数行数 + 1\r\n    },\r\n    // 展示区域做大行数\r\n    maxLine: {\r\n      type: Number,\r\n      default: 1,\r\n    },\r\n    // 是否完整展示内容\r\n    isComplate: {\r\n      type: Boolean,\r\n      default: false,\r\n    },\r\n    // 字体样式\r\n    txtStyle: Object,\r\n    // 超出部分内容 展示字符\r\n    more: {\r\n      type: String,\r\n      default: \"...\",\r\n    },\r\n    // 手动调整距离\r\n    tabs: {\r\n      type: Number,\r\n      default: 0,\r\n    },\r\n  },\r\n  data() {\r\n    return {\r\n      textFat: {\r\n        viewText: \"\", // 展示区域文字\r\n        moreText: \"\", // 省略文字\r\n      },\r\n\r\n      containerStyle: {\r\n        width: 0,\r\n      },\r\n      watchDisplay: \"\",\r\n      textStyle: {\r\n        height: 0,\r\n        letterSpacing: 0,\r\n        lineHeight: 0,\r\n      },\r\n      prDisplayNode: null, // 最近的祖先元素被隐藏的节点\r\n    };\r\n  },\r\n  watch: {\r\n    text() {\r\n      this.getStylesOfText();\r\n    },\r\n    isComplate(value) {\r\n      if (this.textFat.moreText) {\r\n        if (value) {\r\n          const l = this.textFat.viewText.length - this.$props.more.length;\r\n          this.textFat.viewText = this.textFat.viewText.substring(0, l);\r\n        } else {\r\n          this.textFat.viewText = this.textFat.viewText + this.$props.more;\r\n        }\r\n      }\r\n    },\r\n  },\r\n  computed: {\r\n    limitWidth() {\r\n      let maxWidth = 0;\r\n      let { heightType, height, maxLine } = this.$props;\r\n      if (height !== undefined) {\r\n        let numberLineHeight =\r\n          this.textStyle.lineHeight === \"normal\"\r\n            ? 1.2 * this.txtStyle.height\r\n            : parseFloat(this.textStyle.lineHeight);\r\n        maxWidth = ~~(height / numberLineHeight) * this.containerStyle.width;\r\n        if (heightType === \"increase\" && height % numberLineHeight) {\r\n          maxWidth += this.containerStyle.width;\r\n        }\r\n      } else {\r\n        maxWidth = maxLine * this.containerStyle.width;\r\n      }\r\n      return maxWidth;\r\n    },\r\n  },\r\n  mounted() {\r\n    this.getStylesOfText();\r\n  },\r\n  methods: {\r\n    getStylesOfText() {\r\n      this.$nextTick(() => {\r\n        setTimeout(() => {\r\n          if (!this.$refs.container.offsetWidth) {\r\n            this.watchDisplayNone();\r\n            return;\r\n          }\r\n          // 获取填装text容器总宽度\r\n          let span = this.$refs.text.cloneNode();\r\n          span.innerHTML = this.$props.text;\r\n          for (let k in this.$props.txtStyle) {\r\n            span.style[k] = this.$props.txtStyle[k];\r\n          }\r\n          span.style.opacity = 0;\r\n          this.$refs.container.appendChild(span);\r\n          // 展示字体样式\r\n          let textStyle = null;\r\n          if (window.getComputedStyle) {\r\n            textStyle = window.getComputedStyle(this.$refs.text);\r\n            this.textStyle = {\r\n              height: +textStyle.fontSize.replace(/px/, \"\"),\r\n              letterSpacing: +textStyle.letterSpacing.replace(/px/, \"\") || 0,\r\n              lineHeight: textStyle.lineHeight,\r\n            };\r\n          } else {\r\n            textStyle = this.$refs.text.currentStyle();\r\n          }\r\n          this.containerStyle.width = Math.max(\r\n            span.offsetWidth,\r\n            this.$refs.container.offsetWidth -\r\n              this.textStyle.height -\r\n              this.textStyle.letterSpacing\r\n          );\r\n          this.$refs.container.removeChild(span);\r\n          this.getChatsLength();\r\n        }, 50);\r\n      });\r\n    },\r\n    getChatsLength() {\r\n      let { more, text, tabs } = this.$props;\r\n      // 规定区域内字符串个数\r\n      let n = ~~Math.max(\r\n        this.limitWidth /\r\n          (this.textStyle.height + this.textStyle.letterSpacing) -\r\n          more.length,\r\n        0\r\n      );\r\n      const canvasContext = document.createElement(\"canvas\").getContext(\"2d\");\r\n      let textStyle = \"\";\r\n      if (window.getComputedStyle) {\r\n        textStyle = window.getComputedStyle(this.$refs.text);\r\n      } else {\r\n        textStyle = this.$refs.text.currentStyle;\r\n      }\r\n      let textFontStyle =\r\n        textStyle.font ||\r\n        `${textStyle.fontWeight} ${\r\n          textStyle.fontSize\r\n        } ${textStyle.fontFamily.replace(/-apple-system,/g, \"\")}`;\r\n      canvasContext.font = textFontStyle;\r\n      let relStrWidth = 0;\r\n      if (\r\n        canvasContext.measureText(this.text).width +\r\n          (this.text.length - 1) * this.textStyle.letterSpacing <\r\n        this.limitWidth\r\n      ) {\r\n        this.textFat.viewText = this.text;\r\n      } else {\r\n        let moreLength =\r\n          canvasContext.measureText(more).width +\r\n          more.length * this.textStyle.letterSpacing;\r\n        while (n < this.text.length) {\r\n          // 中文字符大小跟fontSize一致，英文/数字/英文符号等字符大小 小于fontsize\r\n          let txt = text.substring(0, n);\r\n          relStrWidth =\r\n            canvasContext.measureText(txt).width +\r\n            n * this.textStyle.letterSpacing +\r\n            moreLength;\r\n          if (relStrWidth > this.limitWidth) {\r\n            break;\r\n          }\r\n          n++;\r\n        }\r\n        let splitIndex = n - 1 + tabs;\r\n        this.textFat = {\r\n          viewText: this.text.substring(0, splitIndex) + more,\r\n          moreText: this.text.substring(splitIndex),\r\n        };\r\n      }\r\n    },\r\n    watchDisplayNone() {\r\n      try {\r\n        let parentDom = this.$refs.container.parentElement;\r\n        let watchedObject = null;\r\n        const _this = this;\r\n        // 寻找最近的display为none的祖先元素\r\n        while (parentDom) {\r\n          if (parentDom.style.display !== \"none\") {\r\n            parentDom = parentDom.parentElement;\r\n          } else {\r\n            watchedObject = parentDom.style;\r\n            break;\r\n          }\r\n        }\r\n        this.watchDisplay = watchedObject.display;\r\n        const isWatched = Object.getOwnPropertyDescriptor(\r\n          watchedObject,\r\n          \"display\"\r\n        );\r\n        this.prDisplayNode = parentDom;\r\n        let watchers = parentDom.EllipsisWatchers || {};\r\n        if (!watchers[this._uid]) {\r\n          // 注册订阅者\r\n          const fn = function (value) {\r\n            if (value !== \"none\" && !this.textFat.viewText) {\r\n              this.getStylesOfText();\r\n            }\r\n          };\r\n          watchers[this._uid] = fn.bind(this);\r\n          parentDom.EllipsisWatchers = watchers;\r\n        }\r\n        // 若该元素之前就被代理过，则忽略\r\n        if (!isWatched || !typeof(isWatched.isWatched) === \"function\") {\r\n          Object.defineProperty(watchedObject, \"display\", {\r\n            configurable: true,\r\n            set: function (value) {\r\n              let watchers = parentDom.EllipsisWatchers;\r\n              // 更改Dom样式\r\n              let style = this.cssText.replace(/display:.+/g, \"\");\r\n              if (value.trim() !== \"\") {\r\n                style += `display: ${value}`;\r\n              }\r\n              parentDom.setAttribute(\"style\", style);\r\n              _this.watchDisplay = value;\r\n\r\n              // 分发当前节点下的所有组件\r\n              for (let uid in watchers) {\r\n                watchers[uid](value);\r\n              }\r\n            },\r\n            get: function () {\r\n              return _this.watchDisplay;\r\n            },\r\n          });\r\n        }\r\n      } catch (e) {\r\n        console.log(e);\r\n      }\r\n    },\r\n  },\r\n  beforeDestroy() {\r\n    if (displayNode) {\r\n      let watchers = this.displayNode?.EllipsisWatchers;\r\n      if (watchers) {\r\n        delete watchers[this._uid];\r\n      }\r\n    }\r\n  },\r\n};\r\n</script>\r\n<style lang=\"css\" scoped>\r\n.ellipsis-slide-enter-active {\r\n  transition: opacity 0.3s;\r\n}\r\n.ellipsis-slide-leave-active {\r\n  transition: opacity 0.3s;\r\n}\r\n.ellipsis-slide-enter,\r\n.ellipsis-slide-leave-to {\r\n  opacity: 0;\r\n}\r\n.dsf-muti-ellipsis span {\r\n  word-break: break-all;\r\n}\r\n</style>"]}, media: undefined });
+      inject("data-v-82513022_0", { source: "\n.dsf-muti-ellipsis-content[data-v-82513022] {\r\n  font-size: 0;\n}\n.ellipsis-slide-enter-active[data-v-82513022] {\r\n  transition: opacity 0.3s;\n}\n.ellipsis-slide-leave-active[data-v-82513022] {\r\n  transition: opacity 0.3s;\n}\n.ellipsis-slide-enter[data-v-82513022],\r\n.ellipsis-slide-leave-to[data-v-82513022] {\r\n  opacity: 0;\n}\n.dsf-muti-ellipsis span[data-v-82513022] {\r\n  word-break: break-all;\n}\r\n", map: {"version":3,"sources":["E:\\projects\\work-self\\gitProjects\\vue-text-ellipsis-ie\\packages\\components\\textEllipsis\\textEllipsis.vue"],"names":[],"mappings":";AAiUA;EACA,YAAA;AACA;AACA;EACA,wBAAA;AACA;AACA;EACA,wBAAA;AACA;AACA;;EAEA,UAAA;AACA;AACA;EACA,qBAAA;AACA","file":"textEllipsis.vue","sourcesContent":["<template>\r\n  <div\r\n    class=\"dsf-muti-ellipsis\"\r\n    ref=\"container\"\r\n  >\r\n    <div\r\n      class=\"ellipsis-webkit-type\"\r\n      :style=\"!isComplate && webkitStyle\"\r\n      v-if=\"!clientIsIe\"\r\n    >\r\n      <div :style=\"txtStylePlus\">{{ text }}</div>\r\n    </div>\r\n    <div\r\n      class=\"ellipsis-ie-type\"\r\n      v-else\r\n    >\r\n      <div class=\"dsf-muti-ellipsis-content\">\r\n        <span\r\n          ref=\"text\"\r\n          :style=\"txtStylePlus\"\r\n        >{{ textFat.viewText }}</span>\r\n        <transition name=\"ellipsis-slide\">\r\n          <span\r\n            class=\"more\"\r\n            :style=\"txtStylePlus\"\r\n            v-if=\"isComplate\"\r\n          >{{\r\n            textFat.moreText\r\n          }}</span>\r\n        </transition>\r\n      </div>\r\n    </div>\r\n  </div>\r\n</template>\r\n<script>\r\nlet clientIsIe = \"\";\r\nexport default {\r\n  name: \"DsfMutiEllipsis\",\r\n  props: {\r\n    // 需要展示的内容\r\n    text: {\r\n      type: String,\r\n      default: \"\",\r\n    },\r\n    // // 展示区域最大高度（优先级更高，自动匹配最合适的行数） ====== 抛弃--保持跟webkit多行省略一致\r\n    // height: Number,\r\n    // // 只有设置高度属性时才生效。 ====== 抛弃--保持跟webkit多行省略一致\r\n    // heightType: {\r\n    //   type: String,\r\n    //   default: \"remove\", // 当设置高度不等于行高的倍数时，remove -> 采用此高度下最大的整数行数  / increase -> 采用此高度下最大的整数行数 + 1\r\n    // },\r\n    // 展示区域做大行数\r\n    maxLine: {\r\n      type: Number,\r\n      default: 1,\r\n    },\r\n    // 是否完整展示内容\r\n    isComplate: {\r\n      type: Boolean,\r\n      default: false,\r\n    },\r\n    // 字体样式\r\n    txtStyle: Object,\r\n    // 超出部分内容 展示字符\r\n    more: {\r\n      type: String,\r\n      default: \"...\",\r\n    },\r\n    // 手动调整距离\r\n    tabs: {\r\n      type: Number,\r\n      default: 0,\r\n    },\r\n  },\r\n  data() {\r\n    return {\r\n      textFat: {\r\n        viewText: \"\", // 展示区域文字\r\n        moreText: \"\", // 省略文字\r\n      },\r\n\r\n      containerStyle: {\r\n        width: 0,\r\n      },\r\n      watchDisplay: \"\",\r\n      textStyle: {\r\n        height: 0,\r\n        letterSpacing: 0,\r\n        lineHeight: 0,\r\n      },\r\n      prDisplayNode: null, // 最近的祖先元素被隐藏的节点\r\n      clientIsIe: \"\",\r\n      webkitStyle: {},\r\n      // 消除tab标签之间幽灵元素\r\n      txtStylePlus: Object.assign({}, { \"font-size\": \"16px\" }, this.txtStyle),\r\n    };\r\n  },\r\n  watch: {\r\n    text() {\r\n      this.getStylesOfText();\r\n    },\r\n    isComplate(value) {\r\n      if (this.textFat.moreText) {\r\n        if (value) {\r\n          const l = this.textFat.viewText.length - this.$props.more.length;\r\n          this.textFat.viewText = this.textFat.viewText.substring(0, l);\r\n        } else {\r\n          this.textFat.viewText = this.textFat.viewText + this.$props.more;\r\n        }\r\n      }\r\n    },\r\n  },\r\n  computed: {\r\n    limitWidth() {\r\n      // let { heightType, height, maxLine } = this.$props;\r\n      // if (height !== undefined) {\r\n      //   let numberLineHeight =\r\n      //     this.textStyle.lineHeight === \"normal\"\r\n      //       ? 1.2 * this.txtStyle.height\r\n      //       : parseFloat(this.textStyle.lineHeight);\r\n      //   maxWidth = ~~(height / numberLineHeight) * this.containerStyle.width;\r\n      //   if (heightType === \"increase\" && height % numberLineHeight) {\r\n      //     maxWidth += this.containerStyle.width;\r\n      //   }\r\n      // } else {\r\n      //   maxWidth = maxLine * this.containerStyle.width;\r\n      // }\r\n      return this.maxLine * this.containerStyle.width;\r\n    },\r\n  },\r\n  mounted() {\r\n    let userAgent = navigator.userAgent;\r\n    if (clientIsIe !== \"\") {\r\n      this.clientIsIe = clientIsIe;\r\n      if (clientIsIe) {\r\n        this.getStylesOfText();\r\n      }\r\n      return;\r\n    }\r\n    if (\r\n      this.more !== \"...\" ||\r\n      (userAgent.indexOf(\"compatible\") > -1 &&\r\n        userAgent.indexOf(\"MSIE\") > -1) ||\r\n      userAgent.indexOf(\"Trident\") > -1\r\n    ) {\r\n      clientIsIe = true;\r\n      this.getStylesOfText();\r\n    } else {\r\n      clientIsIe = false;\r\n      this.webkitStyle = {\r\n        display: \"-webkit-box\",\r\n        \"-webkit-box-orient\": \"vertical\",\r\n        overflow: \"hidden\",\r\n        \"-webkit-line-clamp\": this.maxLine,\r\n        \"text-overflow\": \"ellipsis\",\r\n      };\r\n    }\r\n    this.clientIsIe = clientIsIe;\r\n  },\r\n  methods: {\r\n    getStylesOfText() {\r\n      this.$nextTick(() => {\r\n        setTimeout(() => {\r\n          if (!this.$refs.container.offsetWidth) {\r\n            this.watchDisplayNone();\r\n            return;\r\n          }\r\n          // 获取填装text容器总宽度\r\n          let span = this.$refs.text.cloneNode();\r\n          span.innerHTML = this.$props.text;\r\n          for (let k in this.txtStylePlus) {\r\n            span.style[k] = this.txtStylePlus[k];\r\n          }\r\n          span.style.opacity = 0;\r\n          this.$refs.container.appendChild(span);\r\n          // 展示字体样式\r\n          let textStyle = null;\r\n          if (window.getComputedStyle) {\r\n            textStyle = window.getComputedStyle(this.$refs.text);\r\n            this.textStyle = {\r\n              height: +textStyle.fontSize.replace(/px/, \"\"),\r\n              letterSpacing: +textStyle.letterSpacing.replace(/px/, \"\") || 0,\r\n              lineHeight: textStyle.lineHeight,\r\n            };\r\n          } else {\r\n            textStyle = this.$refs.text.currentStyle();\r\n          }\r\n          this.containerStyle.width = Math.max(\r\n            span.offsetWidth,\r\n            this.$refs.container.offsetWidth -\r\n              this.textStyle.height -\r\n              this.textStyle.letterSpacing\r\n          );\r\n          this.$refs.container.removeChild(span);\r\n          this.getChatsLength();\r\n        }, 50);\r\n      });\r\n    },\r\n    getChatsLength() {\r\n      let { more, text, tabs } = this.$props;\r\n      // 规定区域内字符串个数\r\n      let n = ~~Math.max(\r\n        this.limitWidth /\r\n          (this.textStyle.height + this.textStyle.letterSpacing) -\r\n          more.length,\r\n        0\r\n      );\r\n      const canvasContext = document.createElement(\"canvas\").getContext(\"2d\");\r\n      let textStyle = \"\";\r\n      if (window.getComputedStyle) {\r\n        textStyle = window.getComputedStyle(this.$refs.text);\r\n      } else {\r\n        textStyle = this.$refs.text.currentStyle;\r\n      }\r\n      let textFontStyle =\r\n        textStyle.font ||\r\n        `${textStyle.fontWeight} ${\r\n          textStyle.fontSize\r\n        } ${textStyle.fontFamily.replace(/-apple-system,/g, \"\")}`;\r\n      canvasContext.font = textFontStyle;\r\n      let relStrWidth = 0;\r\n      if (\r\n        canvasContext.measureText(this.text).width +\r\n          (this.text.length - 1) * this.textStyle.letterSpacing <\r\n        this.limitWidth\r\n      ) {\r\n        this.textFat.viewText = this.text;\r\n      } else {\r\n        let moreLength =\r\n          canvasContext.measureText(more).width +\r\n          more.length * this.textStyle.letterSpacing;\r\n        while (n < this.text.length) {\r\n          // 中文字符大小跟fontSize一致，英文/数字/英文符号等字符大小 小于fontsize\r\n          let txt = text.substring(0, n);\r\n          relStrWidth =\r\n            canvasContext.measureText(txt).width +\r\n            n * this.textStyle.letterSpacing +\r\n            moreLength;\r\n          if (relStrWidth > this.limitWidth) {\r\n            break;\r\n          }\r\n          n++;\r\n        }\r\n        let splitIndex = n - 1 + tabs;\r\n        this.textFat = {\r\n          viewText: this.text.substring(0, splitIndex) + more,\r\n          moreText: this.text.substring(splitIndex),\r\n        };\r\n      }\r\n    },\r\n    watchDisplayNone() {\r\n      try {\r\n        let parentDom = this.$refs.container.parentElement;\r\n        let watchedObject = null;\r\n        const _this = this;\r\n        // 寻找最近的display为none的祖先元素\r\n        while (parentDom) {\r\n          if (parentDom.style.display !== \"none\") {\r\n            parentDom = parentDom.parentElement;\r\n          } else {\r\n            watchedObject = parentDom.style;\r\n            break;\r\n          }\r\n        }\r\n        this.watchDisplay = watchedObject.display;\r\n        const isWatched = Object.getOwnPropertyDescriptor(\r\n          watchedObject,\r\n          \"display\"\r\n        );\r\n        this.prDisplayNode = parentDom;\r\n        let watchers = parentDom.EllipsisWatchers || {};\r\n        if (!watchers[this._uid]) {\r\n          // 注册订阅者\r\n          const fn = function (value) {\r\n            if (value !== \"none\" && !this.textFat.viewText) {\r\n              this.getStylesOfText();\r\n            }\r\n          };\r\n          watchers[this._uid] = fn.bind(this);\r\n          parentDom.EllipsisWatchers = watchers;\r\n        }\r\n        // 若该元素之前就被代理过，则忽略\r\n        if (!isWatched || !typeof isWatched.isWatched === \"function\") {\r\n          Object.defineProperty(watchedObject, \"display\", {\r\n            configurable: true,\r\n            set: function (value) {\r\n              let watchers = parentDom.EllipsisWatchers;\r\n              // 更改Dom样式\r\n              let style = this.cssText.replace(/display:.+/g, \"\");\r\n              if (value.trim() !== \"\") {\r\n                style += `display: ${value}`;\r\n              }\r\n              parentDom.setAttribute(\"style\", style);\r\n              _this.watchDisplay = value;\r\n\r\n              // 分发当前节点下的所有组件\r\n              for (let uid in watchers) {\r\n                watchers[uid](value);\r\n              }\r\n            },\r\n            get: function () {\r\n              return _this.watchDisplay;\r\n            },\r\n          });\r\n        }\r\n      } catch (e) {\r\n        console.log(e);\r\n      }\r\n    },\r\n  },\r\n  beforeDestroy() {\r\n    if (this.prDisplayNode) {\r\n      let watchers = this.prDisplayNode?.EllipsisWatchers;\r\n      if (watchers) {\r\n        delete watchers[this._uid];\r\n      }\r\n    }\r\n  },\r\n};\r\n</script>\r\n<style lang=\"css\" scoped>\r\n.dsf-muti-ellipsis-content {\r\n  font-size: 0;\r\n}\r\n.ellipsis-slide-enter-active {\r\n  transition: opacity 0.3s;\r\n}\r\n.ellipsis-slide-leave-active {\r\n  transition: opacity 0.3s;\r\n}\r\n.ellipsis-slide-enter,\r\n.ellipsis-slide-leave-to {\r\n  opacity: 0;\r\n}\r\n.dsf-muti-ellipsis span {\r\n  word-break: break-all;\r\n}\r\n</style>"]}, media: undefined });
 
     };
     /* scoped */
-    const __vue_scope_id__ = "data-v-c62caa18";
+    const __vue_scope_id__ = "data-v-82513022";
     /* module identifier */
     const __vue_module_identifier__ = undefined;
     /* functional template */
@@ -463,12 +528,8 @@
       undefined
     );
 
-  let components = [__vue_component__];
-
   function install(vue) {
-    components.map(component => {
-      vue.component(component.name, component);
-    });
+    vue.component(__vue_component__.name, __vue_component__);
   }
 
   exports.TextEllipsis = __vue_component__;

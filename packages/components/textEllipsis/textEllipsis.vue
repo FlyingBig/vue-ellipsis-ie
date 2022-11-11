@@ -1,5 +1,5 @@
 <template>
-  <div class="dsf-muti-ellipsis" ref="container">
+  <div class="muti-ellipsis" ref="container">
     <div
       class="ellipsis-webkit-type"
       :style="!isComplate && webkitStyle"
@@ -8,8 +8,13 @@
       <div :style="txtStylePlus">{{ text }}</div>
     </div>
     <div class="ellipsis-ie-type" v-else>
-      <div class="dsf-muti-ellipsis-content">
-        <span ref="text" :style="txtStylePlus">{{ textFat.viewText }}</span>
+      <div class="muti-ellipsis-content">
+        <span ref="text" :style="txtStylePlus">
+          {{ textFat.viewText }}
+          <span class="muti-ellipsis-content-more" :style="getMoreStyle()">{{
+            more
+          }}</span>
+        </span>
         <transition name="ellipsis-slide">
           <span class="more" :style="txtStylePlus" v-if="isComplate">{{
             textFat.moreText
@@ -22,7 +27,7 @@
 <script>
 let clientIsIe = "";
 export default {
-  name: "DsfMutiEllipsis",
+  name: "mutiEllipsis",
   props: {
     // 需要展示的内容
     text: {
@@ -80,6 +85,7 @@ export default {
       webkitStyle: {},
       // 消除tab标签之间幽灵元素
       txtStylePlus: Object.assign({}, { "font-size": "16px" }, this.txtStyle),
+      moreStrLength: 0,
     };
   },
   watch: {
@@ -91,27 +97,12 @@ export default {
         if (value) {
           const l = this.textFat.viewText.length - this.$props.more.length;
           this.textFat.viewText = this.textFat.viewText.substring(0, l);
-        } else {
-          this.textFat.viewText = this.textFat.viewText + this.$props.more;
         }
       }
     },
   },
   computed: {
     limitWidth() {
-      // let { heightType, height, maxLine } = this.$props;
-      // if (height !== undefined) {
-      //   let numberLineHeight =
-      //     this.textStyle.lineHeight === "normal"
-      //       ? 1.2 * this.txtStyle.height
-      //       : parseFloat(this.textStyle.lineHeight);
-      //   maxWidth = ~~(height / numberLineHeight) * this.containerStyle.width;
-      //   if (heightType === "increase" && height % numberLineHeight) {
-      //     maxWidth += this.containerStyle.width;
-      //   }
-      // } else {
-      //   maxWidth = maxLine * this.containerStyle.width;
-      // }
       return this.maxLine * this.containerStyle.width;
     },
   },
@@ -124,7 +115,9 @@ export default {
       }
       return;
     }
+    // 若超过显示的字符不为...，则使用ie模式处理
     if (
+      this.more !== "..." ||
       (userAgent.indexOf("compatible") > -1 &&
         userAgent.indexOf("MSIE") > -1) ||
       userAgent.indexOf("Trident") > -1
@@ -144,6 +137,13 @@ export default {
     this.clientIsIe = clientIsIe;
   },
   methods: {
+    getMoreStyle() {
+      return {
+        "margin-left": `-${
+          this.textStyle.letterSpacing + this.moreStrLength / 2
+        }px`,
+      };
+    },
     getStylesOfText() {
       this.$nextTick(() => {
         setTimeout(() => {
@@ -157,7 +157,7 @@ export default {
           for (let k in this.txtStylePlus) {
             span.style[k] = this.txtStylePlus[k];
           }
-          span.style.opacity = 0;
+          span.style.opacity = 1;
           this.$refs.container.appendChild(span);
           // 展示字体样式
           let textStyle = null;
@@ -166,7 +166,8 @@ export default {
             this.textStyle = {
               height: +textStyle.fontSize.replace(/px/, ""),
               letterSpacing: +textStyle.letterSpacing.replace(/px/, "") || 0,
-              lineHeight: textStyle.lineHeight,
+              lineHeight:
+                textStyle.lineHeight === "normal" ? 1.2 : textStyle.lineHeight,
             };
           } else {
             textStyle = this.$refs.text.currentStyle();
@@ -184,14 +185,15 @@ export default {
     },
     getChatsLength() {
       let { more, text, tabs } = this.$props;
-      // 规定区域内字符串个数
+      const canvasContext = document.createElement("canvas").getContext("2d");
+      const moreLength = canvasContext.measureText(more).width;
+      this.moreStrLength = moreLength;
+      // 计算区域内字符串个数(大概)
       let n = ~~Math.max(
-        this.limitWidth /
-          (this.textStyle.height + this.textStyle.letterSpacing) -
-          more.length,
+        (this.limitWidth - moreLength) /
+          (this.textStyle.height + this.textStyle.letterSpacing),
         0
       );
-      const canvasContext = document.createElement("canvas").getContext("2d");
       let textStyle = "";
       if (window.getComputedStyle) {
         textStyle = window.getComputedStyle(this.$refs.text);
@@ -210,11 +212,9 @@ export default {
           (this.text.length - 1) * this.textStyle.letterSpacing <
         this.limitWidth
       ) {
+        // 内容小于外层容器宽度
         this.textFat.viewText = this.text;
       } else {
-        let moreLength =
-          canvasContext.measureText(more).width +
-          more.length * this.textStyle.letterSpacing;
         while (n < this.text.length) {
           // 中文字符大小跟fontSize一致，英文/数字/英文符号等字符大小 小于fontsize
           let txt = text.substring(0, n);
@@ -227,9 +227,30 @@ export default {
           }
           n++;
         }
+        // 在容器高度判断字符长度是否超长
+        let heightDom = document.createElement("div");
+        heightDom.style.background = "red";
+        heightDom.style.wordBreak = "break-all";
         let splitIndex = n - 1 + tabs;
+        heightDom.innerHTML = this.text.substring(0, splitIndex);
+        this.$refs.container.appendChild(heightDom);
+        let relHeight = heightDom.offsetHeight;
+        const height =
+          ~~this.maxLine * this.textStyle.height * this.textStyle.lineHeight +
+          1;
+        while (relHeight >= height) {
+          --splitIndex;
+          heightDom.innerHTML = `<span>${this.text.substring(
+            0,
+            splitIndex
+          )}<span class="muti-ellipsis-content-more" style="letter-spacing: 0;">${
+            this.more
+          }</span></span>`;
+          relHeight = heightDom.offsetHeight;
+        }
+        heightDom.remove();
         this.textFat = {
-          viewText: this.text.substring(0, splitIndex) + more,
+          viewText: this.text.substring(0, splitIndex),
           moreText: this.text.substring(splitIndex),
         };
       }
@@ -290,7 +311,7 @@ export default {
           });
         }
       } catch (e) {
-        console.log(e);
+        console.error(e);
       }
     },
   },
@@ -305,8 +326,14 @@ export default {
 };
 </script>
 <style lang="css" scoped>
-.dsf-muti-ellipsis-content {
+.muti-ellipsis {
+  word-break: break-all;
+}
+.muti-ellipsis-content {
   font-size: 0;
+}
+.muti-ellipsis-content-more {
+  letter-spacing: 0;
 }
 .ellipsis-slide-enter-active {
   transition: opacity 0.3s;
@@ -317,8 +344,5 @@ export default {
 .ellipsis-slide-enter,
 .ellipsis-slide-leave-to {
   opacity: 0;
-}
-.dsf-muti-ellipsis span {
-  word-break: break-all;
 }
 </style>

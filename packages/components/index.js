@@ -1,10 +1,7 @@
 import TextEllipsis from "./textEllipsis";
 
-let components = [TextEllipsis];
 function install(vue) {
-  components.map((component) => {
-    vue.component(component.name, component);
-  });
+  vue.component(TextEllipsis.name, TextEllipsis);
 }
 export { TextEllipsis };
-export default install
+export default install;
