@@ -26,6 +26,7 @@
 </template>
 <script>
 let clientIsIe = "";
+
 export default {
   name: "MutiEllipsis",
   props: {
