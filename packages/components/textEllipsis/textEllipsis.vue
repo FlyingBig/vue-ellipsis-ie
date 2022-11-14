@@ -27,7 +27,7 @@
 <script>
 let clientIsIe = "";
 export default {
-  name: "mutiEllipsis",
+  name: "MutiEllipsis",
   props: {
     // 需要展示的内容
     text: {
