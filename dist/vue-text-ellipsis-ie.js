@@ -585,7 +585,7 @@
     vue.component(__vue_component__.name, __vue_component__);
   }
 
-  exports.TextEllipsis = __vue_component__;
+  exports.MutiEllipsis = __vue_component__;
   exports["default"] = install;
 
   Object.defineProperty(exports, '__esModule', { value: true });

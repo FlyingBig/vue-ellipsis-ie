@@ -1,7 +1,7 @@
-import TextEllipsis from "./textEllipsis";
+import MutiEllipsis from "./textEllipsis";
 
 function install(vue) {
-  vue.component(TextEllipsis.name, TextEllipsis);
+  vue.component(MutiEllipsis.name, MutiEllipsis);
 }
-export { TextEllipsis };
+export { MutiEllipsis };
 export default install;
