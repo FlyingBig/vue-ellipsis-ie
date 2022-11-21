@@ -1,5 +1,8 @@
 <template>
-  <div class="muti-ellipsis" ref="container">
+  <div
+    class="muti-ellipsis"
+    ref="container"
+  >
     <div
       class="ellipsis-webkit-type"
       :style="!isComplate && webkitStyle"
@@ -7,16 +10,30 @@
     >
       <div :style="txtStylePlus">{{ text }}</div>
     </div>
-    <div class="ellipsis-ie-type" v-else>
+    <div
+      class="ellipsis-ie-type"
+      v-else
+    >
       <div class="muti-ellipsis-content">
-        <span ref="text" :style="txtStylePlus">
+        <span
+          ref="text"
+          :style="txtStylePlus"
+        >
           {{ textFat.viewText }}
-          <span class="muti-ellipsis-content-more" :style="getMoreStyle()">{{
+          <span
+            v-if="showSuffix && !isComplate"
+            class="muti-ellipsis-content-more"
+            :style="getMoreStyle()"
+          >{{
             more
           }}</span>
         </span>
         <transition name="ellipsis-slide">
-          <span class="more" :style="txtStylePlus" v-if="isComplate">{{
+          <span
+            class="more"
+            :style="txtStylePlus"
+            v-if="isComplate"
+          >{{
             textFat.moreText
           }}</span>
         </transition>
@@ -87,6 +104,7 @@ export default {
       // 消除tab标签之间幽灵元素
       txtStylePlus: Object.assign({}, { "font-size": "16px" }, this.txtStyle),
       moreStrLength: 0,
+      showSuffix: true,
     };
   },
   watch: {
@@ -96,7 +114,7 @@ export default {
     isComplate(value) {
       if (this.textFat.moreText) {
         if (value) {
-          const l = this.textFat.viewText.length - this.$props.more.length;
+          const l = this.textFat.viewText.length;
           this.textFat.viewText = this.textFat.viewText.substring(0, l);
         }
       }
@@ -113,6 +131,14 @@ export default {
       this.clientIsIe = clientIsIe;
       if (clientIsIe) {
         this.getStylesOfText();
+      } else {
+        this.webkitStyle = {
+          display: "-webkit-box",
+          "-webkit-box-orient": "vertical",
+          overflow: "hidden",
+          "-webkit-line-clamp": this.maxLine,
+          "text-overflow": "ellipsis",
+        };
       }
       return;
     }
@@ -215,7 +241,10 @@ export default {
       ) {
         // 内容小于外层容器宽度
         this.textFat.viewText = this.text;
+        this.showSuffix = false;
       } else {
+        this.showSuffix = true;
+
         while (n < this.text.length) {
           // 中文字符大小跟fontSize一致，英文/数字/英文符号等字符大小 小于fontsize
           let txt = text.substring(0, n);
@@ -233,7 +262,12 @@ export default {
         heightDom.style.background = "red";
         heightDom.style.wordBreak = "break-all";
         let splitIndex = n - 1 + tabs;
-        heightDom.innerHTML = this.text.substring(0, splitIndex);
+        heightDom.innerHTML = `<span>${this.text.substring(
+          0,
+          splitIndex
+        )}\n<span class="muti-ellipsis-content-more" style="letter-spacing: 0; margin-left: -${
+          this.textStyle.letterSpacing + this.moreStrLength / 2
+        }px">${this.more}</span></span>`;
         this.$refs.container.appendChild(heightDom);
         let relHeight = heightDom.offsetHeight;
         const height =
@@ -244,12 +278,12 @@ export default {
           heightDom.innerHTML = `<span>${this.text.substring(
             0,
             splitIndex
-          )}<span class="muti-ellipsis-content-more" style="letter-spacing: 0;">${
-            this.more
-          }</span></span>`;
+          )}\n<span class="muti-ellipsis-content-more" style="letter-spacing: 0;margin-left: -${
+            this.textStyle.letterSpacing + this.moreStrLength / 2
+          }px">${this.more}</span></span>`;
           relHeight = heightDom.offsetHeight;
         }
-        heightDom.remove();
+        this.$refs.container.removeChild(heightDom);
         this.textFat = {
           viewText: this.text.substring(0, splitIndex),
           moreText: this.text.substring(splitIndex),
@@ -300,7 +334,6 @@ export default {
               }
               parentDom.setAttribute("style", style);
               _this.watchDisplay = value;
-
               // 分发当前节点下的所有组件
               for (let uid in watchers) {
                 watchers[uid](value);
