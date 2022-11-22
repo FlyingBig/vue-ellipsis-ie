@@ -351,7 +351,7 @@ export default {
   },
   beforeDestroy() {
     if (this.prDisplayNode) {
-      let watchers = this.prDisplayNode?.EllipsisWatchers;
+      let watchers = this.prDisplayNode.EllipsisWatchers;
       if (watchers) {
         delete watchers[this._uid];
       }

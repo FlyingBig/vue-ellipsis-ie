@@ -48,7 +48,7 @@
   //
   //
 
-  let clientIsIe = "";
+  var clientIsIe = "";
 
   var script = {
     name: "MutiEllipsis",
@@ -88,7 +88,7 @@
         default: 0,
       },
     },
-    data() {
+    data: function data() {
       return {
         textFat: {
           viewText: "", // 展示区域文字
@@ -114,25 +114,25 @@
       };
     },
     watch: {
-      text() {
+      text: function text() {
         this.getStylesOfText();
       },
-      isComplate(value) {
+      isComplate: function isComplate(value) {
         if (this.textFat.moreText) {
           if (value) {
-            const l = this.textFat.viewText.length;
+            var l = this.textFat.viewText.length;
             this.textFat.viewText = this.textFat.viewText.substring(0, l);
           }
         }
       },
     },
     computed: {
-      limitWidth() {
+      limitWidth: function limitWidth() {
         return this.maxLine * this.containerStyle.width;
       },
     },
-    mounted() {
-      let userAgent = navigator.userAgent;
+    mounted: function mounted() {
+      var userAgent = navigator.userAgent;
       if (clientIsIe !== "") {
         this.clientIsIe = clientIsIe;
         if (clientIsIe) {
@@ -170,76 +170,77 @@
       this.clientIsIe = clientIsIe;
     },
     methods: {
-      getMoreStyle() {
+      getMoreStyle: function getMoreStyle() {
         return {
-          "margin-left": `-${
-          this.textStyle.letterSpacing + this.moreStrLength / 2
-        }px`,
+          "margin-left": ("-" + (this.textStyle.letterSpacing + this.moreStrLength / 2) + "px"),
         };
       },
-      getStylesOfText() {
-        this.$nextTick(() => {
-          setTimeout(() => {
-            if (!this.$refs.container.offsetWidth) {
-              this.watchDisplayNone();
+      getStylesOfText: function getStylesOfText() {
+        var this$1$1 = this;
+
+        this.$nextTick(function () {
+          setTimeout(function () {
+            if (!this$1$1.$refs.container.offsetWidth) {
+              this$1$1.watchDisplayNone();
               return;
             }
             // 获取填装text容器总宽度
-            let span = this.$refs.text.cloneNode();
-            span.innerHTML = this.$props.text;
-            for (let k in this.txtStylePlus) {
-              span.style[k] = this.txtStylePlus[k];
+            var span = this$1$1.$refs.text.cloneNode();
+            span.innerHTML = this$1$1.$props.text;
+            for (var k in this$1$1.txtStylePlus) {
+              span.style[k] = this$1$1.txtStylePlus[k];
             }
             span.style.opacity = 1;
-            this.$refs.container.appendChild(span);
+            this$1$1.$refs.container.appendChild(span);
             // 展示字体样式
-            let textStyle = null;
+            var textStyle = null;
             if (window.getComputedStyle) {
-              textStyle = window.getComputedStyle(this.$refs.text);
-              this.textStyle = {
+              textStyle = window.getComputedStyle(this$1$1.$refs.text);
+              this$1$1.textStyle = {
                 height: +textStyle.fontSize.replace(/px/, ""),
                 letterSpacing: +textStyle.letterSpacing.replace(/px/, "") || 0,
                 lineHeight:
                   textStyle.lineHeight === "normal" ? 1.2 : textStyle.lineHeight,
               };
             } else {
-              textStyle = this.$refs.text.currentStyle();
+              textStyle = this$1$1.$refs.text.currentStyle();
             }
-            this.containerStyle.width = Math.max(
+            this$1$1.containerStyle.width = Math.max(
               span.offsetWidth,
-              this.$refs.container.offsetWidth -
-                this.textStyle.height -
-                this.textStyle.letterSpacing
+              this$1$1.$refs.container.offsetWidth -
+                this$1$1.textStyle.height -
+                this$1$1.textStyle.letterSpacing
             );
-            this.$refs.container.removeChild(span);
-            this.getChatsLength();
+            this$1$1.$refs.container.removeChild(span);
+            this$1$1.getChatsLength();
           }, 50);
         });
       },
-      getChatsLength() {
-        let { more, text, tabs } = this.$props;
-        const canvasContext = document.createElement("canvas").getContext("2d");
-        const moreLength = canvasContext.measureText(more).width;
+      getChatsLength: function getChatsLength() {
+        var ref = this.$props;
+        var more = ref.more;
+        var text = ref.text;
+        var tabs = ref.tabs;
+        var canvasContext = document.createElement("canvas").getContext("2d");
+        var moreLength = canvasContext.measureText(more).width;
         this.moreStrLength = moreLength;
         // 计算区域内字符串个数(大概)
-        let n = ~~Math.max(
+        var n = ~~Math.max(
           (this.limitWidth - moreLength) /
             (this.textStyle.height + this.textStyle.letterSpacing),
           0
         );
-        let textStyle = "";
+        var textStyle = "";
         if (window.getComputedStyle) {
           textStyle = window.getComputedStyle(this.$refs.text);
         } else {
           textStyle = this.$refs.text.currentStyle;
         }
-        let textFontStyle =
+        var textFontStyle =
           textStyle.font ||
-          `${textStyle.fontWeight} ${
-          textStyle.fontSize
-        } ${textStyle.fontFamily.replace(/-apple-system,/g, "")}`;
+          ((textStyle.fontWeight) + " " + (textStyle.fontSize) + " " + (textStyle.fontFamily.replace(/-apple-system,/g, "")));
         canvasContext.font = textFontStyle;
-        let relStrWidth = 0;
+        var relStrWidth = 0;
         if (
           canvasContext.measureText(this.text).width +
             (this.text.length - 1) * this.textStyle.letterSpacing <
@@ -253,7 +254,7 @@
 
           while (n < this.text.length) {
             // 中文字符大小跟fontSize一致，英文/数字/英文符号等字符大小 小于fontsize
-            let txt = text.substring(0, n);
+            var txt = text.substring(0, n);
             relStrWidth =
               canvasContext.measureText(txt).width +
               n * this.textStyle.letterSpacing +
@@ -264,29 +265,25 @@
             n++;
           }
           // 在容器高度判断字符长度是否超长
-          let heightDom = document.createElement("div");
+          var heightDom = document.createElement("div");
           heightDom.style.background = "red";
           heightDom.style.wordBreak = "break-all";
-          let splitIndex = n - 1 + tabs;
-          heightDom.innerHTML = `<span>${this.text.substring(
-          0,
-          splitIndex
-        )}\n<span class="muti-ellipsis-content-more" style="letter-spacing: 0; margin-left: -${
-          this.textStyle.letterSpacing + this.moreStrLength / 2
-        }px">${this.more}</span></span>`;
+          var splitIndex = n - 1 + tabs;
+          heightDom.innerHTML = "<span>" + (this.text.substring(
+            0,
+            splitIndex
+          )) + "\n<span class=\"muti-ellipsis-content-more\" style=\"letter-spacing: 0; margin-left: -" + (this.textStyle.letterSpacing + this.moreStrLength / 2) + "px\">" + (this.more) + "</span></span>";
           this.$refs.container.appendChild(heightDom);
-          let relHeight = heightDom.offsetHeight;
-          const height =
+          var relHeight = heightDom.offsetHeight;
+          var height =
             ~~this.maxLine * this.textStyle.height * this.textStyle.lineHeight +
             1;
           while (relHeight >= height) {
             --splitIndex;
-            heightDom.innerHTML = `<span>${this.text.substring(
-            0,
-            splitIndex
-          )}\n<span class="muti-ellipsis-content-more" style="letter-spacing: 0;margin-left: -${
-            this.textStyle.letterSpacing + this.moreStrLength / 2
-          }px">${this.more}</span></span>`;
+            heightDom.innerHTML = "<span>" + (this.text.substring(
+              0,
+              splitIndex
+            )) + "\n<span class=\"muti-ellipsis-content-more\" style=\"letter-spacing: 0;margin-left: -" + (this.textStyle.letterSpacing + this.moreStrLength / 2) + "px\">" + (this.more) + "</span></span>";
             relHeight = heightDom.offsetHeight;
           }
           this.$refs.container.removeChild(heightDom);
@@ -296,11 +293,11 @@
           };
         }
       },
-      watchDisplayNone() {
+      watchDisplayNone: function watchDisplayNone() {
         try {
-          let parentDom = this.$refs.container.parentElement;
-          let watchedObject = null;
-          const _this = this;
+          var parentDom = this.$refs.container.parentElement;
+          var watchedObject = null;
+          var _this = this;
           // 寻找最近的display为none的祖先元素
           while (parentDom) {
             if (parentDom.style.display !== "none") {
@@ -311,15 +308,15 @@
             }
           }
           this.watchDisplay = watchedObject.display;
-          const isWatched = Object.getOwnPropertyDescriptor(
+          var isWatched = Object.getOwnPropertyDescriptor(
             watchedObject,
             "display"
           );
           this.prDisplayNode = parentDom;
-          let watchers = parentDom.EllipsisWatchers || {};
+          var watchers = parentDom.EllipsisWatchers || {};
           if (!watchers[this._uid]) {
             // 注册订阅者
-            const fn = function (value) {
+            var fn = function (value) {
               if (value !== "none" && !this.textFat.viewText) {
                 this.getStylesOfText();
               }
@@ -332,16 +329,16 @@
             Object.defineProperty(watchedObject, "display", {
               configurable: true,
               set: function (value) {
-                let watchers = parentDom.EllipsisWatchers;
+                var watchers = parentDom.EllipsisWatchers;
                 // 更改Dom样式
-                let style = this.cssText.replace(/display:.+/g, "");
+                var style = this.cssText.replace(/display:.+/g, "");
                 if (value.trim() !== "") {
-                  style += `display: ${value}`;
+                  style += "display: " + value;
                 }
                 parentDom.setAttribute("style", style);
                 _this.watchDisplay = value;
                 // 分发当前节点下的所有组件
-                for (let uid in watchers) {
+                for (var uid in watchers) {
                   watchers[uid](value);
                 }
               },
@@ -355,9 +352,9 @@
         }
       },
     },
-    beforeDestroy() {
+    beforeDestroy: function beforeDestroy() {
       if (this.prDisplayNode) {
-        let watchers = this.prDisplayNode?.EllipsisWatchers;
+        var watchers = this.prDisplayNode.EllipsisWatchers;
         if (watchers) {
           delete watchers[this._uid];
         }
@@ -372,7 +369,7 @@
           shadowMode = false;
       }
       // Vue.extend constructor export interop.
-      const options = typeof script === 'function' ? script.options : script;
+      var options = typeof script === 'function' ? script.options : script;
       // render functions
       if (template && template.render) {
           options.render = template.render;
@@ -387,7 +384,7 @@
       if (scopeId) {
           options._scopeId = scopeId;
       }
-      let hook;
+      var hook;
       if (moduleIdentifier) {
           // server build
           hook = function (context) {
@@ -425,7 +422,7 @@
       if (hook) {
           if (options.functional) {
               // register for functional component in vue file
-              const originalRender = options.render;
+              var originalRender = options.render;
               options.render = function renderWithStyleInjection(h, context) {
                   hook.call(context);
                   return originalRender(h, context);
@@ -433,26 +430,26 @@
           }
           else {
               // inject component registration as beforeCreate hook
-              const existing = options.beforeCreate;
+              var existing = options.beforeCreate;
               options.beforeCreate = existing ? [].concat(existing, hook) : [hook];
           }
       }
       return script;
   }
 
-  const isOldIE = typeof navigator !== 'undefined' &&
+  var isOldIE = typeof navigator !== 'undefined' &&
       /msie [6-9]\\b/.test(navigator.userAgent.toLowerCase());
   function createInjector(context) {
-      return (id, style) => addStyle(id, style);
+      return function (id, style) { return addStyle(id, style); };
   }
-  let HEAD;
-  const styles = {};
+  var HEAD;
+  var styles = {};
   function addStyle(id, css) {
-      const group = isOldIE ? css.media || 'default' : id;
-      const style = styles[group] || (styles[group] = { ids: new Set(), styles: [] });
+      var group = isOldIE ? css.media || 'default' : id;
+      var style = styles[group] || (styles[group] = { ids: new Set(), styles: [] });
       if (!style.ids.has(id)) {
           style.ids.add(id);
-          let code = css.source;
+          var code = css.source;
           if (css.map) {
               // https://developer.chrome.com/devtools/docs/javascript-debugging
               // this makes source maps inside style tags work properly in Chrome
@@ -467,7 +464,7 @@
               style.element = document.createElement('style');
               style.element.type = 'text/css';
               if (css.media)
-                  style.element.setAttribute('media', css.media);
+                  { style.element.setAttribute('media', css.media); }
               if (HEAD === undefined) {
                   HEAD = document.head || document.getElementsByTagName('head')[0];
               }
@@ -480,21 +477,21 @@
                   .join('\n');
           }
           else {
-              const index = style.ids.size - 1;
-              const textNode = document.createTextNode(code);
-              const nodes = style.element.childNodes;
+              var index = style.ids.size - 1;
+              var textNode = document.createTextNode(code);
+              var nodes = style.element.childNodes;
               if (nodes[index])
-                  style.element.removeChild(nodes[index]);
+                  { style.element.removeChild(nodes[index]); }
               if (nodes.length)
-                  style.element.insertBefore(textNode, nodes[index]);
+                  { style.element.insertBefore(textNode, nodes[index]); }
               else
-                  style.element.appendChild(textNode);
+                  { style.element.appendChild(textNode); }
           }
       }
   }
 
   /* script */
-  const __vue_script__ = script;
+  var __vue_script__ = script;
 
   /* template */
   var __vue_render__ = function () {
@@ -529,8 +526,7 @@
                         },
                         [_vm._v(_vm._s(_vm.more))]
                       )
-                    : _vm._e(),
-                ]),
+                    : _vm._e() ]),
                 _vm._v(" "),
                 _c("transition", { attrs: { name: "ellipsis-slide" } }, [
                   _vm.isComplate
@@ -539,36 +535,32 @@
                         { staticClass: "more", style: _vm.txtStylePlus },
                         [_vm._v(_vm._s(_vm.textFat.moreText))]
                       )
-                    : _vm._e(),
-                ]),
-              ],
+                    : _vm._e() ]) ],
               1
-            ),
-          ]),
-    ])
+            ) ]) ])
   };
   var __vue_staticRenderFns__ = [];
   __vue_render__._withStripped = true;
 
     /* style */
-    const __vue_inject_styles__ = function (inject) {
-      if (!inject) return
-      inject("data-v-376c287c_0", { source: "\n.muti-ellipsis[data-v-376c287c] {\r\n  word-break: break-all;\n}\n.muti-ellipsis-content[data-v-376c287c] {\r\n  font-size: 0;\n}\n.muti-ellipsis-content-more[data-v-376c287c] {\r\n  letter-spacing: 0;\n}\n.ellipsis-slide-enter-active[data-v-376c287c] {\r\n  transition: opacity 0.3s;\n}\n.ellipsis-slide-leave-active[data-v-376c287c] {\r\n  transition: opacity 0.3s;\n}\n.ellipsis-slide-enter[data-v-376c287c],\r\n.ellipsis-slide-leave-to[data-v-376c287c] {\r\n  opacity: 0;\n}\r\n", map: {"version":3,"sources":["E:\\programs\\githubPrograms\\vue-text-ellipsis-ie\\packages\\components\\textEllipsis\\textEllipsis.vue"],"names":[],"mappings":";AA0WA;EACA,qBAAA;AACA;AACA;EACA,YAAA;AACA;AACA;EACA,iBAAA;AACA;AACA;EACA,wBAAA;AACA;AACA;EACA,wBAAA;AACA;AACA;;EAEA,UAAA;AACA","file":"textEllipsis.vue","sourcesContent":["<template>\r\n  <div\r\n    class=\"muti-ellipsis\"\r\n    ref=\"container\"\r\n  >\r\n    <div\r\n      class=\"ellipsis-webkit-type\"\r\n      :style=\"!isComplate && webkitStyle\"\r\n      v-if=\"!clientIsIe\"\r\n    >\r\n      <div :style=\"txtStylePlus\">{{ text }}</div>\r\n    </div>\r\n    <div\r\n      class=\"ellipsis-ie-type\"\r\n      v-else\r\n    >\r\n      <div class=\"muti-ellipsis-content\">\r\n        <span\r\n          ref=\"text\"\r\n          :style=\"txtStylePlus\"\r\n        >\r\n          {{ textFat.viewText }}\r\n          <span\r\n            v-if=\"showSuffix && !isComplate\"\r\n            class=\"muti-ellipsis-content-more\"\r\n            :style=\"getMoreStyle()\"\r\n          >{{\r\n            more\r\n          }}</span>\r\n        </span>\r\n        <transition name=\"ellipsis-slide\">\r\n          <span\r\n            class=\"more\"\r\n            :style=\"txtStylePlus\"\r\n            v-if=\"isComplate\"\r\n          >{{\r\n            textFat.moreText\r\n          }}</span>\r\n        </transition>\r\n      </div>\r\n    </div>\r\n  </div>\r\n</template>\r\n<script>\r\nlet clientIsIe = \"\";\r\n\r\nexport default {\r\n  name: \"MutiEllipsis\",\r\n  props: {\r\n    // 需要展示的内容\r\n    text: {\r\n      type: String,\r\n      default: \"\",\r\n    },\r\n    // // 展示区域最大高度（优先级更高，自动匹配最合适的行数） ====== 抛弃--保持跟webkit多行省略一致\r\n    // height: Number,\r\n    // // 只有设置高度属性时才生效。 ====== 抛弃--保持跟webkit多行省略一致\r\n    // heightType: {\r\n    //   type: String,\r\n    //   default: \"remove\", // 当设置高度不等于行高的倍数时，remove -> 采用此高度下最大的整数行数  / increase -> 采用此高度下最大的整数行数 + 1\r\n    // },\r\n    // 展示区域做大行数\r\n    maxLine: {\r\n      type: Number,\r\n      default: 1,\r\n    },\r\n    // 是否完整展示内容\r\n    isComplate: {\r\n      type: Boolean,\r\n      default: false,\r\n    },\r\n    // 字体样式\r\n    txtStyle: Object,\r\n    // 超出部分内容 展示字符\r\n    more: {\r\n      type: String,\r\n      default: \"...\",\r\n    },\r\n    // 手动调整距离\r\n    tabs: {\r\n      type: Number,\r\n      default: 0,\r\n    },\r\n  },\r\n  data() {\r\n    return {\r\n      textFat: {\r\n        viewText: \"\", // 展示区域文字\r\n        moreText: \"\", // 省略文字\r\n      },\r\n\r\n      containerStyle: {\r\n        width: 0,\r\n      },\r\n      watchDisplay: \"\",\r\n      textStyle: {\r\n        height: 0,\r\n        letterSpacing: 0,\r\n        lineHeight: 0,\r\n      },\r\n      prDisplayNode: null, // 最近的祖先元素被隐藏的节点\r\n      clientIsIe: \"\",\r\n      webkitStyle: {},\r\n      // 消除tab标签之间幽灵元素\r\n      txtStylePlus: Object.assign({}, { \"font-size\": \"16px\" }, this.txtStyle),\r\n      moreStrLength: 0,\r\n      showSuffix: true,\r\n    };\r\n  },\r\n  watch: {\r\n    text() {\r\n      this.getStylesOfText();\r\n    },\r\n    isComplate(value) {\r\n      if (this.textFat.moreText) {\r\n        if (value) {\r\n          const l = this.textFat.viewText.length;\r\n          this.textFat.viewText = this.textFat.viewText.substring(0, l);\r\n        }\r\n      }\r\n    },\r\n  },\r\n  computed: {\r\n    limitWidth() {\r\n      return this.maxLine * this.containerStyle.width;\r\n    },\r\n  },\r\n  mounted() {\r\n    let userAgent = navigator.userAgent;\r\n    if (clientIsIe !== \"\") {\r\n      this.clientIsIe = clientIsIe;\r\n      if (clientIsIe) {\r\n        this.getStylesOfText();\r\n      } else {\r\n        this.webkitStyle = {\r\n          display: \"-webkit-box\",\r\n          \"-webkit-box-orient\": \"vertical\",\r\n          overflow: \"hidden\",\r\n          \"-webkit-line-clamp\": this.maxLine,\r\n          \"text-overflow\": \"ellipsis\",\r\n        };\r\n      }\r\n      return;\r\n    }\r\n    // 若超过显示的字符不为...，则使用ie模式处理\r\n    if (\r\n      this.more !== \"...\" ||\r\n      (userAgent.indexOf(\"compatible\") > -1 &&\r\n        userAgent.indexOf(\"MSIE\") > -1) ||\r\n      userAgent.indexOf(\"Trident\") > -1\r\n    ) {\r\n      clientIsIe = true;\r\n      this.getStylesOfText();\r\n    } else {\r\n      clientIsIe = false;\r\n      this.webkitStyle = {\r\n        display: \"-webkit-box\",\r\n        \"-webkit-box-orient\": \"vertical\",\r\n        overflow: \"hidden\",\r\n        \"-webkit-line-clamp\": this.maxLine,\r\n        \"text-overflow\": \"ellipsis\",\r\n      };\r\n    }\r\n    this.clientIsIe = clientIsIe;\r\n  },\r\n  methods: {\r\n    getMoreStyle() {\r\n      return {\r\n        \"margin-left\": `-${\r\n          this.textStyle.letterSpacing + this.moreStrLength / 2\r\n        }px`,\r\n      };\r\n    },\r\n    getStylesOfText() {\r\n      this.$nextTick(() => {\r\n        setTimeout(() => {\r\n          if (!this.$refs.container.offsetWidth) {\r\n            this.watchDisplayNone();\r\n            return;\r\n          }\r\n          // 获取填装text容器总宽度\r\n          let span = this.$refs.text.cloneNode();\r\n          span.innerHTML = this.$props.text;\r\n          for (let k in this.txtStylePlus) {\r\n            span.style[k] = this.txtStylePlus[k];\r\n          }\r\n          span.style.opacity = 1;\r\n          this.$refs.container.appendChild(span);\r\n          // 展示字体样式\r\n          let textStyle = null;\r\n          if (window.getComputedStyle) {\r\n            textStyle = window.getComputedStyle(this.$refs.text);\r\n            this.textStyle = {\r\n              height: +textStyle.fontSize.replace(/px/, \"\"),\r\n              letterSpacing: +textStyle.letterSpacing.replace(/px/, \"\") || 0,\r\n              lineHeight:\r\n                textStyle.lineHeight === \"normal\" ? 1.2 : textStyle.lineHeight,\r\n            };\r\n          } else {\r\n            textStyle = this.$refs.text.currentStyle();\r\n          }\r\n          this.containerStyle.width = Math.max(\r\n            span.offsetWidth,\r\n            this.$refs.container.offsetWidth -\r\n              this.textStyle.height -\r\n              this.textStyle.letterSpacing\r\n          );\r\n          this.$refs.container.removeChild(span);\r\n          this.getChatsLength();\r\n        }, 50);\r\n      });\r\n    },\r\n    getChatsLength() {\r\n      let { more, text, tabs } = this.$props;\r\n      const canvasContext = document.createElement(\"canvas\").getContext(\"2d\");\r\n      const moreLength = canvasContext.measureText(more).width;\r\n      this.moreStrLength = moreLength;\r\n      // 计算区域内字符串个数(大概)\r\n      let n = ~~Math.max(\r\n        (this.limitWidth - moreLength) /\r\n          (this.textStyle.height + this.textStyle.letterSpacing),\r\n        0\r\n      );\r\n      let textStyle = \"\";\r\n      if (window.getComputedStyle) {\r\n        textStyle = window.getComputedStyle(this.$refs.text);\r\n      } else {\r\n        textStyle = this.$refs.text.currentStyle;\r\n      }\r\n      let textFontStyle =\r\n        textStyle.font ||\r\n        `${textStyle.fontWeight} ${\r\n          textStyle.fontSize\r\n        } ${textStyle.fontFamily.replace(/-apple-system,/g, \"\")}`;\r\n      canvasContext.font = textFontStyle;\r\n      let relStrWidth = 0;\r\n      if (\r\n        canvasContext.measureText(this.text).width +\r\n          (this.text.length - 1) * this.textStyle.letterSpacing <\r\n        this.limitWidth\r\n      ) {\r\n        // 内容小于外层容器宽度\r\n        this.textFat.viewText = this.text;\r\n        this.showSuffix = false;\r\n      } else {\r\n        this.showSuffix = true;\r\n\r\n        while (n < this.text.length) {\r\n          // 中文字符大小跟fontSize一致，英文/数字/英文符号等字符大小 小于fontsize\r\n          let txt = text.substring(0, n);\r\n          relStrWidth =\r\n            canvasContext.measureText(txt).width +\r\n            n * this.textStyle.letterSpacing +\r\n            moreLength;\r\n          if (relStrWidth > this.limitWidth) {\r\n            break;\r\n          }\r\n          n++;\r\n        }\r\n        // 在容器高度判断字符长度是否超长\r\n        let heightDom = document.createElement(\"div\");\r\n        heightDom.style.background = \"red\";\r\n        heightDom.style.wordBreak = \"break-all\";\r\n        let splitIndex = n - 1 + tabs;\r\n        heightDom.innerHTML = `<span>${this.text.substring(\r\n          0,\r\n          splitIndex\r\n        )}\\n<span class=\"muti-ellipsis-content-more\" style=\"letter-spacing: 0; margin-left: -${\r\n          this.textStyle.letterSpacing + this.moreStrLength / 2\r\n        }px\">${this.more}</span></span>`;\r\n        this.$refs.container.appendChild(heightDom);\r\n        let relHeight = heightDom.offsetHeight;\r\n        const height =\r\n          ~~this.maxLine * this.textStyle.height * this.textStyle.lineHeight +\r\n          1;\r\n        while (relHeight >= height) {\r\n          --splitIndex;\r\n          heightDom.innerHTML = `<span>${this.text.substring(\r\n            0,\r\n            splitIndex\r\n          )}\\n<span class=\"muti-ellipsis-content-more\" style=\"letter-spacing: 0;margin-left: -${\r\n            this.textStyle.letterSpacing + this.moreStrLength / 2\r\n          }px\">${this.more}</span></span>`;\r\n          relHeight = heightDom.offsetHeight;\r\n        }\r\n        this.$refs.container.removeChild(heightDom);\r\n        this.textFat = {\r\n          viewText: this.text.substring(0, splitIndex),\r\n          moreText: this.text.substring(splitIndex),\r\n        };\r\n      }\r\n    },\r\n    watchDisplayNone() {\r\n      try {\r\n        let parentDom = this.$refs.container.parentElement;\r\n        let watchedObject = null;\r\n        const _this = this;\r\n        // 寻找最近的display为none的祖先元素\r\n        while (parentDom) {\r\n          if (parentDom.style.display !== \"none\") {\r\n            parentDom = parentDom.parentElement;\r\n          } else {\r\n            watchedObject = parentDom.style;\r\n            break;\r\n          }\r\n        }\r\n        this.watchDisplay = watchedObject.display;\r\n        const isWatched = Object.getOwnPropertyDescriptor(\r\n          watchedObject,\r\n          \"display\"\r\n        );\r\n        this.prDisplayNode = parentDom;\r\n        let watchers = parentDom.EllipsisWatchers || {};\r\n        if (!watchers[this._uid]) {\r\n          // 注册订阅者\r\n          const fn = function (value) {\r\n            if (value !== \"none\" && !this.textFat.viewText) {\r\n              this.getStylesOfText();\r\n            }\r\n          };\r\n          watchers[this._uid] = fn.bind(this);\r\n          parentDom.EllipsisWatchers = watchers;\r\n        }\r\n        // 若该元素之前就被代理过，则忽略\r\n        if (!isWatched || !typeof isWatched.isWatched === \"function\") {\r\n          Object.defineProperty(watchedObject, \"display\", {\r\n            configurable: true,\r\n            set: function (value) {\r\n              let watchers = parentDom.EllipsisWatchers;\r\n              // 更改Dom样式\r\n              let style = this.cssText.replace(/display:.+/g, \"\");\r\n              if (value.trim() !== \"\") {\r\n                style += `display: ${value}`;\r\n              }\r\n              parentDom.setAttribute(\"style\", style);\r\n              _this.watchDisplay = value;\r\n              // 分发当前节点下的所有组件\r\n              for (let uid in watchers) {\r\n                watchers[uid](value);\r\n              }\r\n            },\r\n            get: function () {\r\n              return _this.watchDisplay;\r\n            },\r\n          });\r\n        }\r\n      } catch (e) {\r\n        console.error(e);\r\n      }\r\n    },\r\n  },\r\n  beforeDestroy() {\r\n    if (this.prDisplayNode) {\r\n      let watchers = this.prDisplayNode?.EllipsisWatchers;\r\n      if (watchers) {\r\n        delete watchers[this._uid];\r\n      }\r\n    }\r\n  },\r\n};\r\n</script>\r\n<style lang=\"css\" scoped>\r\n.muti-ellipsis {\r\n  word-break: break-all;\r\n}\r\n.muti-ellipsis-content {\r\n  font-size: 0;\r\n}\r\n.muti-ellipsis-content-more {\r\n  letter-spacing: 0;\r\n}\r\n.ellipsis-slide-enter-active {\r\n  transition: opacity 0.3s;\r\n}\r\n.ellipsis-slide-leave-active {\r\n  transition: opacity 0.3s;\r\n}\r\n.ellipsis-slide-enter,\r\n.ellipsis-slide-leave-to {\r\n  opacity: 0;\r\n}\r\n</style>\r\n"]}, media: undefined });
+    var __vue_inject_styles__ = function (inject) {
+      if (!inject) { return }
+      inject("data-v-226c7357_0", { source: "\n.muti-ellipsis[data-v-226c7357] {\r\n  word-break: break-all;\n}\n.muti-ellipsis-content[data-v-226c7357] {\r\n  font-size: 0;\n}\n.muti-ellipsis-content-more[data-v-226c7357] {\r\n  letter-spacing: 0;\n}\n.ellipsis-slide-enter-active[data-v-226c7357] {\r\n  transition: opacity 0.3s;\n}\n.ellipsis-slide-leave-active[data-v-226c7357] {\r\n  transition: opacity 0.3s;\n}\n.ellipsis-slide-enter[data-v-226c7357],\r\n.ellipsis-slide-leave-to[data-v-226c7357] {\r\n  opacity: 0;\n}\r\n", map: {"version":3,"sources":["E:\\programs\\githubPrograms\\vue-text-ellipsis-ie\\packages\\components\\textEllipsis\\textEllipsis.vue"],"names":[],"mappings":";AA0WA;EACA,qBAAA;AACA;AACA;EACA,YAAA;AACA;AACA;EACA,iBAAA;AACA;AACA;EACA,wBAAA;AACA;AACA;EACA,wBAAA;AACA;AACA;;EAEA,UAAA;AACA","file":"textEllipsis.vue","sourcesContent":["<template>\r\n  <div\r\n    class=\"muti-ellipsis\"\r\n    ref=\"container\"\r\n  >\r\n    <div\r\n      class=\"ellipsis-webkit-type\"\r\n      :style=\"!isComplate && webkitStyle\"\r\n      v-if=\"!clientIsIe\"\r\n    >\r\n      <div :style=\"txtStylePlus\">{{ text }}</div>\r\n    </div>\r\n    <div\r\n      class=\"ellipsis-ie-type\"\r\n      v-else\r\n    >\r\n      <div class=\"muti-ellipsis-content\">\r\n        <span\r\n          ref=\"text\"\r\n          :style=\"txtStylePlus\"\r\n        >\r\n          {{ textFat.viewText }}\r\n          <span\r\n            v-if=\"showSuffix && !isComplate\"\r\n            class=\"muti-ellipsis-content-more\"\r\n            :style=\"getMoreStyle()\"\r\n          >{{\r\n            more\r\n          }}</span>\r\n        </span>\r\n        <transition name=\"ellipsis-slide\">\r\n          <span\r\n            class=\"more\"\r\n            :style=\"txtStylePlus\"\r\n            v-if=\"isComplate\"\r\n          >{{\r\n            textFat.moreText\r\n          }}</span>\r\n        </transition>\r\n      </div>\r\n    </div>\r\n  </div>\r\n</template>\r\n<script>\r\nlet clientIsIe = \"\";\r\n\r\nexport default {\r\n  name: \"MutiEllipsis\",\r\n  props: {\r\n    // 需要展示的内容\r\n    text: {\r\n      type: String,\r\n      default: \"\",\r\n    },\r\n    // // 展示区域最大高度（优先级更高，自动匹配最合适的行数） ====== 抛弃--保持跟webkit多行省略一致\r\n    // height: Number,\r\n    // // 只有设置高度属性时才生效。 ====== 抛弃--保持跟webkit多行省略一致\r\n    // heightType: {\r\n    //   type: String,\r\n    //   default: \"remove\", // 当设置高度不等于行高的倍数时，remove -> 采用此高度下最大的整数行数  / increase -> 采用此高度下最大的整数行数 + 1\r\n    // },\r\n    // 展示区域做大行数\r\n    maxLine: {\r\n      type: Number,\r\n      default: 1,\r\n    },\r\n    // 是否完整展示内容\r\n    isComplate: {\r\n      type: Boolean,\r\n      default: false,\r\n    },\r\n    // 字体样式\r\n    txtStyle: Object,\r\n    // 超出部分内容 展示字符\r\n    more: {\r\n      type: String,\r\n      default: \"...\",\r\n    },\r\n    // 手动调整距离\r\n    tabs: {\r\n      type: Number,\r\n      default: 0,\r\n    },\r\n  },\r\n  data() {\r\n    return {\r\n      textFat: {\r\n        viewText: \"\", // 展示区域文字\r\n        moreText: \"\", // 省略文字\r\n      },\r\n\r\n      containerStyle: {\r\n        width: 0,\r\n      },\r\n      watchDisplay: \"\",\r\n      textStyle: {\r\n        height: 0,\r\n        letterSpacing: 0,\r\n        lineHeight: 0,\r\n      },\r\n      prDisplayNode: null, // 最近的祖先元素被隐藏的节点\r\n      clientIsIe: \"\",\r\n      webkitStyle: {},\r\n      // 消除tab标签之间幽灵元素\r\n      txtStylePlus: Object.assign({}, { \"font-size\": \"16px\" }, this.txtStyle),\r\n      moreStrLength: 0,\r\n      showSuffix: true,\r\n    };\r\n  },\r\n  watch: {\r\n    text() {\r\n      this.getStylesOfText();\r\n    },\r\n    isComplate(value) {\r\n      if (this.textFat.moreText) {\r\n        if (value) {\r\n          const l = this.textFat.viewText.length;\r\n          this.textFat.viewText = this.textFat.viewText.substring(0, l);\r\n        }\r\n      }\r\n    },\r\n  },\r\n  computed: {\r\n    limitWidth() {\r\n      return this.maxLine * this.containerStyle.width;\r\n    },\r\n  },\r\n  mounted() {\r\n    let userAgent = navigator.userAgent;\r\n    if (clientIsIe !== \"\") {\r\n      this.clientIsIe = clientIsIe;\r\n      if (clientIsIe) {\r\n        this.getStylesOfText();\r\n      } else {\r\n        this.webkitStyle = {\r\n          display: \"-webkit-box\",\r\n          \"-webkit-box-orient\": \"vertical\",\r\n          overflow: \"hidden\",\r\n          \"-webkit-line-clamp\": this.maxLine,\r\n          \"text-overflow\": \"ellipsis\",\r\n        };\r\n      }\r\n      return;\r\n    }\r\n    // 若超过显示的字符不为...，则使用ie模式处理\r\n    if (\r\n      this.more !== \"...\" ||\r\n      (userAgent.indexOf(\"compatible\") > -1 &&\r\n        userAgent.indexOf(\"MSIE\") > -1) ||\r\n      userAgent.indexOf(\"Trident\") > -1\r\n    ) {\r\n      clientIsIe = true;\r\n      this.getStylesOfText();\r\n    } else {\r\n      clientIsIe = false;\r\n      this.webkitStyle = {\r\n        display: \"-webkit-box\",\r\n        \"-webkit-box-orient\": \"vertical\",\r\n        overflow: \"hidden\",\r\n        \"-webkit-line-clamp\": this.maxLine,\r\n        \"text-overflow\": \"ellipsis\",\r\n      };\r\n    }\r\n    this.clientIsIe = clientIsIe;\r\n  },\r\n  methods: {\r\n    getMoreStyle() {\r\n      return {\r\n        \"margin-left\": `-${\r\n          this.textStyle.letterSpacing + this.moreStrLength / 2\r\n        }px`,\r\n      };\r\n    },\r\n    getStylesOfText() {\r\n      this.$nextTick(() => {\r\n        setTimeout(() => {\r\n          if (!this.$refs.container.offsetWidth) {\r\n            this.watchDisplayNone();\r\n            return;\r\n          }\r\n          // 获取填装text容器总宽度\r\n          let span = this.$refs.text.cloneNode();\r\n          span.innerHTML = this.$props.text;\r\n          for (let k in this.txtStylePlus) {\r\n            span.style[k] = this.txtStylePlus[k];\r\n          }\r\n          span.style.opacity = 1;\r\n          this.$refs.container.appendChild(span);\r\n          // 展示字体样式\r\n          let textStyle = null;\r\n          if (window.getComputedStyle) {\r\n            textStyle = window.getComputedStyle(this.$refs.text);\r\n            this.textStyle = {\r\n              height: +textStyle.fontSize.replace(/px/, \"\"),\r\n              letterSpacing: +textStyle.letterSpacing.replace(/px/, \"\") || 0,\r\n              lineHeight:\r\n                textStyle.lineHeight === \"normal\" ? 1.2 : textStyle.lineHeight,\r\n            };\r\n          } else {\r\n            textStyle = this.$refs.text.currentStyle();\r\n          }\r\n          this.containerStyle.width = Math.max(\r\n            span.offsetWidth,\r\n            this.$refs.container.offsetWidth -\r\n              this.textStyle.height -\r\n              this.textStyle.letterSpacing\r\n          );\r\n          this.$refs.container.removeChild(span);\r\n          this.getChatsLength();\r\n        }, 50);\r\n      });\r\n    },\r\n    getChatsLength() {\r\n      let { more, text, tabs } = this.$props;\r\n      const canvasContext = document.createElement(\"canvas\").getContext(\"2d\");\r\n      const moreLength = canvasContext.measureText(more).width;\r\n      this.moreStrLength = moreLength;\r\n      // 计算区域内字符串个数(大概)\r\n      let n = ~~Math.max(\r\n        (this.limitWidth - moreLength) /\r\n          (this.textStyle.height + this.textStyle.letterSpacing),\r\n        0\r\n      );\r\n      let textStyle = \"\";\r\n      if (window.getComputedStyle) {\r\n        textStyle = window.getComputedStyle(this.$refs.text);\r\n      } else {\r\n        textStyle = this.$refs.text.currentStyle;\r\n      }\r\n      let textFontStyle =\r\n        textStyle.font ||\r\n        `${textStyle.fontWeight} ${\r\n          textStyle.fontSize\r\n        } ${textStyle.fontFamily.replace(/-apple-system,/g, \"\")}`;\r\n      canvasContext.font = textFontStyle;\r\n      let relStrWidth = 0;\r\n      if (\r\n        canvasContext.measureText(this.text).width +\r\n          (this.text.length - 1) * this.textStyle.letterSpacing <\r\n        this.limitWidth\r\n      ) {\r\n        // 内容小于外层容器宽度\r\n        this.textFat.viewText = this.text;\r\n        this.showSuffix = false;\r\n      } else {\r\n        this.showSuffix = true;\r\n\r\n        while (n < this.text.length) {\r\n          // 中文字符大小跟fontSize一致，英文/数字/英文符号等字符大小 小于fontsize\r\n          let txt = text.substring(0, n);\r\n          relStrWidth =\r\n            canvasContext.measureText(txt).width +\r\n            n * this.textStyle.letterSpacing +\r\n            moreLength;\r\n          if (relStrWidth > this.limitWidth) {\r\n            break;\r\n          }\r\n          n++;\r\n        }\r\n        // 在容器高度判断字符长度是否超长\r\n        let heightDom = document.createElement(\"div\");\r\n        heightDom.style.background = \"red\";\r\n        heightDom.style.wordBreak = \"break-all\";\r\n        let splitIndex = n - 1 + tabs;\r\n        heightDom.innerHTML = `<span>${this.text.substring(\r\n          0,\r\n          splitIndex\r\n        )}\\n<span class=\"muti-ellipsis-content-more\" style=\"letter-spacing: 0; margin-left: -${\r\n          this.textStyle.letterSpacing + this.moreStrLength / 2\r\n        }px\">${this.more}</span></span>`;\r\n        this.$refs.container.appendChild(heightDom);\r\n        let relHeight = heightDom.offsetHeight;\r\n        const height =\r\n          ~~this.maxLine * this.textStyle.height * this.textStyle.lineHeight +\r\n          1;\r\n        while (relHeight >= height) {\r\n          --splitIndex;\r\n          heightDom.innerHTML = `<span>${this.text.substring(\r\n            0,\r\n            splitIndex\r\n          )}\\n<span class=\"muti-ellipsis-content-more\" style=\"letter-spacing: 0;margin-left: -${\r\n            this.textStyle.letterSpacing + this.moreStrLength / 2\r\n          }px\">${this.more}</span></span>`;\r\n          relHeight = heightDom.offsetHeight;\r\n        }\r\n        this.$refs.container.removeChild(heightDom);\r\n        this.textFat = {\r\n          viewText: this.text.substring(0, splitIndex),\r\n          moreText: this.text.substring(splitIndex),\r\n        };\r\n      }\r\n    },\r\n    watchDisplayNone() {\r\n      try {\r\n        let parentDom = this.$refs.container.parentElement;\r\n        let watchedObject = null;\r\n        const _this = this;\r\n        // 寻找最近的display为none的祖先元素\r\n        while (parentDom) {\r\n          if (parentDom.style.display !== \"none\") {\r\n            parentDom = parentDom.parentElement;\r\n          } else {\r\n            watchedObject = parentDom.style;\r\n            break;\r\n          }\r\n        }\r\n        this.watchDisplay = watchedObject.display;\r\n        const isWatched = Object.getOwnPropertyDescriptor(\r\n          watchedObject,\r\n          \"display\"\r\n        );\r\n        this.prDisplayNode = parentDom;\r\n        let watchers = parentDom.EllipsisWatchers || {};\r\n        if (!watchers[this._uid]) {\r\n          // 注册订阅者\r\n          const fn = function (value) {\r\n            if (value !== \"none\" && !this.textFat.viewText) {\r\n              this.getStylesOfText();\r\n            }\r\n          };\r\n          watchers[this._uid] = fn.bind(this);\r\n          parentDom.EllipsisWatchers = watchers;\r\n        }\r\n        // 若该元素之前就被代理过，则忽略\r\n        if (!isWatched || !typeof isWatched.isWatched === \"function\") {\r\n          Object.defineProperty(watchedObject, \"display\", {\r\n            configurable: true,\r\n            set: function (value) {\r\n              let watchers = parentDom.EllipsisWatchers;\r\n              // 更改Dom样式\r\n              let style = this.cssText.replace(/display:.+/g, \"\");\r\n              if (value.trim() !== \"\") {\r\n                style += `display: ${value}`;\r\n              }\r\n              parentDom.setAttribute(\"style\", style);\r\n              _this.watchDisplay = value;\r\n              // 分发当前节点下的所有组件\r\n              for (let uid in watchers) {\r\n                watchers[uid](value);\r\n              }\r\n            },\r\n            get: function () {\r\n              return _this.watchDisplay;\r\n            },\r\n          });\r\n        }\r\n      } catch (e) {\r\n        console.error(e);\r\n      }\r\n    },\r\n  },\r\n  beforeDestroy() {\r\n    if (this.prDisplayNode) {\r\n      let watchers = this.prDisplayNode.EllipsisWatchers;\r\n      if (watchers) {\r\n        delete watchers[this._uid];\r\n      }\r\n    }\r\n  },\r\n};\r\n</script>\r\n<style lang=\"css\" scoped>\r\n.muti-ellipsis {\r\n  word-break: break-all;\r\n}\r\n.muti-ellipsis-content {\r\n  font-size: 0;\r\n}\r\n.muti-ellipsis-content-more {\r\n  letter-spacing: 0;\r\n}\r\n.ellipsis-slide-enter-active {\r\n  transition: opacity 0.3s;\r\n}\r\n.ellipsis-slide-leave-active {\r\n  transition: opacity 0.3s;\r\n}\r\n.ellipsis-slide-enter,\r\n.ellipsis-slide-leave-to {\r\n  opacity: 0;\r\n}\r\n</style>\r\n"]}, media: undefined });
 
     };
     /* scoped */
-    const __vue_scope_id__ = "data-v-376c287c";
+    var __vue_scope_id__ = "data-v-226c7357";
     /* module identifier */
-    const __vue_module_identifier__ = undefined;
+    var __vue_module_identifier__ = undefined;
     /* functional template */
-    const __vue_is_functional_template__ = false;
+    var __vue_is_functional_template__ = false;
     /* style inject SSR */
     
     /* style inject shadow dom */
     
 
     
-    const __vue_component__ = /*#__PURE__*/normalizeComponent(
+    var __vue_component__ = /*#__PURE__*/normalizeComponent(
       { render: __vue_render__, staticRenderFns: __vue_staticRenderFns__ },
       __vue_inject_styles__,
       __vue_script__,

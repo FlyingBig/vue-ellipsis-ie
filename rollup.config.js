@@ -3,6 +3,7 @@ import vue from "rollup-plugin-vue";
 import babel from "@rollup/plugin-babel";
 import commonjs from "@rollup/plugin-commonjs";
 import css from "rollup-plugin-css-only";
+import buble from '@rollup/plugin-buble'; // 解析称es5
 
 let config = {
   input: "./packages/components/index.js",
@@ -27,6 +28,7 @@ let config = {
       exclude: "**/node_modules/**",
     }),
     commonjs(),
+    buble()
   ],
 };
 export default config;

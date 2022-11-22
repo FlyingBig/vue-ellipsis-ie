@@ -3,18 +3,18 @@
  * @Date: 2022-11-14 11:09:45
  * @description: 描述此文件
  * @LastEditors: Chenqy
- * @LastEditTime: 2022-11-21 15:33:52
+ * @LastEditTime: 2022-11-22 11:35:24
 -->
 # vue-text-ellipsis-ie
 兼容ie浏览器的多行省略Vue组件
 ## 用法
 ```
-· import { MutiEllipsis } from "vue-text-ellipsis-ie";
+· import { MutiEllipsis } from "vue-ellipsis-ie";
 在组件中直接使用components: { MutiEllipsis }
 ```
 ```
  在main.js中
-import MutiEllipsis from "vue-text-ellipsis-ie";
+import MutiEllipsis from "vue-ellipsis-ie";
 Vue.use(MutiEllipsis);
 在任意组件中使用： <MutiEllipsis text="text" :maxLine="9"></MutiEllipsis>
 ```
