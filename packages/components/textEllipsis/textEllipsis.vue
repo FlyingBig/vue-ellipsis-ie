@@ -8,16 +8,19 @@
       :style="!isComplate && webkitStyle"
       v-if="!clientIsIe"
     >
-      <div :style="txtStylePlus">{{ text }}</div>
+      <div :style="txtStyle">{{ text }}</div>
     </div>
     <div
       class="ellipsis-ie-type"
       v-else
     >
-      <div class="muti-ellipsis-content">
+      <div
+        class="muti-ellipsis-content"
+        :style="setFontSizeNormal()"
+      >
         <span
           ref="text"
-          :style="txtStylePlus"
+          :style="txtStyle"
         >
           {{ textFat.viewText }}
           <span
@@ -31,7 +34,7 @@
         <transition name="ellipsis-slide">
           <span
             class="more"
-            :style="txtStylePlus"
+            :style="txtStyle"
             v-if="isComplate"
           >{{
             textFat.moreText
@@ -52,13 +55,6 @@ export default {
       type: String,
       default: "",
     },
-    // // 展示区域最大高度（优先级更高，自动匹配最合适的行数） ====== 抛弃--保持跟webkit多行省略一致
-    // height: Number,
-    // // 只有设置高度属性时才生效。 ====== 抛弃--保持跟webkit多行省略一致
-    // heightType: {
-    //   type: String,
-    //   default: "remove", // 当设置高度不等于行高的倍数时，remove -> 采用此高度下最大的整数行数  / increase -> 采用此高度下最大的整数行数 + 1
-    // },
     // 展示区域做大行数
     maxLine: {
       type: Number,
@@ -70,7 +66,10 @@ export default {
       default: false,
     },
     // 字体样式
-    txtStyle: Object,
+    txtStyle: {
+      type: Object,
+      default: () => ({}),
+    },
     // 超出部分内容 展示字符
     more: {
       type: String,
@@ -101,8 +100,6 @@ export default {
       prDisplayNode: null, // 最近的祖先元素被隐藏的节点
       clientIsIe: "",
       webkitStyle: {},
-      // 消除tab标签之间幽灵元素
-      txtStylePlus: Object.assign({}, { "font-size": "16px" }, this.txtStyle),
       moreStrLength: 0,
       showSuffix: true,
     };
@@ -164,6 +161,11 @@ export default {
     this.clientIsIe = clientIsIe;
   },
   methods: {
+    setFontSizeNormal() {
+      return (this.textStyle && this.textStyle.relLineHeight) === "normal"
+        ? { lineHeight: 1.32 }
+        : {};
+    },
     getMoreStyle() {
       return {
         "margin-left": `-${
@@ -181,8 +183,8 @@ export default {
           // 获取填装text容器总宽度
           let span = this.$refs.text.cloneNode();
           span.innerHTML = this.$props.text;
-          for (let k in this.txtStylePlus) {
-            span.style[k] = this.txtStylePlus[k];
+          for (let k in this.txtStyle) {
+            span.style[k] = this.txtStyle[k];
           }
           span.style.opacity = 1;
           this.$refs.container.appendChild(span);
@@ -191,10 +193,16 @@ export default {
           if (window.getComputedStyle) {
             textStyle = window.getComputedStyle(this.$refs.text);
             this.textStyle = {
-              height: +textStyle.fontSize.replace(/px/, ""),
+              height: parseFloat(textStyle.fontSize),
               letterSpacing: +textStyle.letterSpacing.replace(/px/, "") || 0,
               lineHeight:
-                textStyle.lineHeight === "normal" ? 1.2 : textStyle.lineHeight,
+                textStyle.lineHeight === "normal"
+                  ? 1.32
+                  : typeof(textStyle.lineHeight) === 'string'
+                  ? parseFloat(textStyle.lineHeight) /
+                    parseFloat(textStyle.fontSize)
+                  : textStyle.lineHeight,
+              relLineHeight: textStyle.lineHeight,
             };
           } else {
             textStyle = this.$refs.text.currentStyle();
@@ -362,9 +370,6 @@ export default {
 <style lang="css" scoped>
 .muti-ellipsis {
   word-break: break-all;
-}
-.muti-ellipsis-content {
-  font-size: 0;
 }
 .muti-ellipsis-content-more {
   letter-spacing: 0;
