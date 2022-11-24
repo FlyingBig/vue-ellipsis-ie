@@ -1,10 +1,14 @@
-<!--
- * @Author: Chenqy
- * @Date: 2022-11-14 11:09:45
- * @description: 描述此文件
- * @LastEditors: Chenqy
- * @LastEditTime: 2022-11-22 11:35:24
--->
+<p align="center">
+<h1 align="center">vue-ellipsis-ie</h1>
+<h4 align="center">
+  兼容ie浏览器的多行省略
+</h4>
+<h6 align="center">
+
+ [![npm (tag)](https://img.shields.io/npm/v/vue-ellipsis-ie/latest)](https://www.npmjs.com/package/timecatjs)
+
+</h6>
+
 # vue-text-ellipsis-ie
 兼容ie浏览器的多行省略Vue组件
 ## 用法
